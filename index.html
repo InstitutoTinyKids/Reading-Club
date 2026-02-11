@@ -993,7 +993,8 @@
                 const checkDevice = () => {
                     const ua = navigator.userAgent || navigator.vendor || window.opera;
                     const isMobileBody = /iPhone|iPod|Android.*Mobile|Windows Phone|IEMobile|BlackBerry|webOS/i.test(ua);
-                    const isTabletBody = /iPad|Android(?!.*Mobile)|Tablet|PlayBook|Silk/i.test(ua) || (navigator.maxTouchPoints > 1 && window.innerWidth >= 768 && window.innerWidth <= 1280);
+                    // Aumentamos el rango de detección a 1400px para soportar tablets de alta resolución como la de 1340px
+                    const isTabletBody = /iPad|Android(?!.*Mobile)|Tablet|PlayBook|Silk/i.test(ua) || (navigator.maxTouchPoints > 1 && window.innerWidth >= 768 && window.innerWidth <= 1400);
 
                     const isMobiTab = isMobileBody || isTabletBody;
                     setIsTablet(isMobiTab);
