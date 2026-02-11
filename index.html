@@ -562,43 +562,47 @@
                 display: none !important;
             }
 
-            /* Toggle tabs - floating buttons */
+            /* Toggle tabs - floating buttons (Refined to match user image) */
             .landscape-toggle-header,
             .landscape-toggle-footer {
                 position: fixed !important;
-                z-index: 150 !important;
-                background: rgba(212, 175, 55, 0.9) !important;
-                color: black !important;
+                z-index: 500 !important;
+                background: #d4af37 !important;
+                color: #000 !important;
                 border: none !important;
-                padding: 0.5rem 1rem !important;
-                font-size: 10px !important;
-                font-weight: bold !important;
+                padding: 10px 24px !important;
+                font-size: 11px !important;
+                font-weight: 800 !important;
                 cursor: pointer !important;
-                transition: all 0.3s ease !important;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+                transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1) !important;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
                 display: flex !important;
-                /* Override inline display:none */
                 align-items: center !important;
-                gap: 0.25rem !important;
+                gap: 8px !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.05em !important;
+                font-family: 'Outfit', sans-serif !important;
             }
 
             .landscape-toggle-header {
                 top: 0 !important;
                 left: 50% !important;
-                transform: translateX(-50%) !important;
-                border-radius: 0 0 8px 8px !important;
+                transform: translateX(-50%) translateY(0) !important;
+                border-radius: 0 0 12px 12px !important;
             }
 
             .landscape-toggle-footer {
                 bottom: 0 !important;
                 left: 50% !important;
-                transform: translateX(-50%) !important;
-                border-radius: 8px 8px 0 0 !important;
+                transform: translateX(-50%) translateY(0) !important;
+                border-radius: 12px 12px 0 0 !important;
             }
 
             .landscape-toggle-header:hover,
             .landscape-toggle-footer:hover {
-                background: rgba(212, 175, 55, 1) !important;
+                background: #fff !important;
+                padding-left: 32px !important;
+                padding-right: 32px !important;
             }
 
             /* Auto-hide footer/navigation - slides up from bottom */
@@ -1310,30 +1314,28 @@
                             <button
                                 onClick={() => setBarsHidden(false)}
                                 className="landscape-toggle-header"
-                                style={{ display: 'flex', opacity: 0.9, background: '#d4af37', border: '1px solid black' }}
                             >
-                                <Icon name="chevron-down" size={12} />
+                                <Icon name="chevron-down" size={16} />
                                 SHOW MENU
                             </button>
                             <button
                                 onClick={() => setBarsHidden(false)}
                                 className="landscape-toggle-footer"
-                                style={{ display: 'flex', opacity: 0.9, background: '#d4af37', border: '1px solid black' }}
                             >
-                                <Icon name="chevron-up" size={12} />
+                                <Icon name="chevron-up" size={16} />
                                 SHOW NAVIGATION
                             </button>
                         </>
                     )}
 
-                    {/* Button to hide bars inside the bars themselves (ONLY for Mobile/Tablet in Landscape) */}
+                    {/* Button to hide bars inside the main view (when bars ARE visible) */}
                     {!barsHidden && isTablet && window.innerWidth > window.innerHeight && (
                         <button
                             onClick={() => setBarsHidden(true)}
-                            className="fixed top-1/2 right-4 z-[200] bg-[#d4af37] text-black p-2 rounded-full shadow-2xl hover:scale-110 transition-all opacity-80"
-                            title="Hide Bars"
+                            className="fixed top-1/2 right-6 z-[250] bg-[#d4af37] text-black w-12 h-12 flex items-center justify-center rounded-full shadow-[0_0_20px_rgba(0,0,0,0.4)] hover:scale-110 active:scale-95 transition-all border-2 border-white/20"
+                            title="Hide Controls"
                         >
-                            <Icon name="minimize" size={20} />
+                            <Icon name="minimize-2" size={24} />
                         </button>
                     )}
 
