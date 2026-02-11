@@ -128,6 +128,16 @@
             cursor: crosshair;
         }
 
+        /* Freeze view during drawing to prevent "jelly" movement */
+        body.marker-active-mode {
+            overflow: hidden !important;
+            touch-action: none !important;
+            overscroll-behavior: none !important;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+
         /* Teacher Sidebar */
         .teacher-sidebar {
             width: 350px;
@@ -486,7 +496,7 @@
                 right: 0 !important;
                 z-index: 200 !important;
                 transform: translateY(-100%) !important;
-                transition: transform 0.3s ease !important;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
                 padding: 0.5rem 1rem !important;
                 height: 44px !important;
                 background: rgba(0, 0, 0, 0.95) !important;
@@ -495,6 +505,16 @@
 
             .header-controls.landscape-visible {
                 transform: translateY(0) !important;
+            }
+
+            /* Bars Hidden State */
+            .bars-hidden .header-controls {
+                transform: translateY(-100%) !important;
+            }
+
+            .bars-hidden .landscape-toggle-header {
+                opacity: 1 !important;
+                pointer-events: auto !important;
             }
 
             /* Hide scene badge in landscape */
@@ -589,13 +609,24 @@
                 right: 0 !important;
                 z-index: 200 !important;
                 transform: translateY(100%) !important;
-                transition: transform 0.3s ease !important;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
                 background: rgba(0, 0, 0, 0.95) !important;
                 backdrop-filter: blur(10px) !important;
             }
 
             .min-h-screen>.glass:last-of-type.landscape-visible {
                 transform: translateY(0) !important;
+            }
+
+            .bars-hidden .min-h-screen>.glass:last-of-type {
+                transform: translateY(100%) !important;
+            }
+
+            /* Adjust container height when bars are hidden */
+            .bars-hidden .book-container {
+                height: 100dvh !important;
+                margin-top: 0 !important;
+                margin-bottom: 0 !important;
             }
 
             /* V2: Cover page landscape optimization - VERTICAL LAYOUT */
@@ -927,6 +958,8 @@
             const [isEditingNotes, setIsEditingNotes] = useState(false);
             const [notesPage, setNotesPage] = useState(0);
             const [fullImage, setFullImage] = useState(false);
+            const [barsHidden, setBarsHidden] = useState(false);
+            const [isTablet, setIsTablet] = useState(false);
 
             // V2: Collapsible UI Controls
             const [showOptionsMenu, setShowOptionsMenu] = useState(false);
@@ -950,6 +983,48 @@
                     }
                 ]
             });
+
+            // Tablet & Phone Detection and Default Horizontal Mode
+            useEffect(() => {
+                const checkDevice = () => {
+                    const ua = navigator.userAgent || navigator.vendor || window.opera;
+                    const isMobileBody = /iPhone|iPod|Android.*Mobile|Windows Phone|IEMobile|BlackBerry|webOS/i.test(ua);
+                    const isTabletBody = /iPad|Android(?!.*Mobile)|Tablet|PlayBook|Silk/i.test(ua) || (navigator.maxTouchPoints > 1 && window.innerWidth >= 768 && window.innerWidth <= 1280);
+
+                    const isMobiTab = isMobileBody || isTabletBody;
+                    setIsTablet(isMobiTab);
+
+                    // Solo activar ocultamiento automático en tablets y teléfonos en horizontal
+                    if (isMobiTab && window.innerWidth > window.innerHeight) {
+                        setBarsHidden(true);
+                    } else {
+                        setBarsHidden(false); // Siempre visible en vertical o desktop
+                    }
+                };
+                checkDevice();
+                window.addEventListener('resize', checkDevice);
+                return () => window.removeEventListener('resize', checkDevice);
+            }, []);
+
+            // Freeze View Logic
+            useEffect(() => {
+                if (markerActive || fullImage || isResizing) {
+                    document.body.classList.add('marker-active-mode');
+                } else {
+                    document.body.classList.remove('marker-active-mode');
+                }
+            }, [markerActive, fullImage, isResizing]);
+
+            // Sync barsHidden with existing landscape states for compatibility
+            useEffect(() => {
+                if (barsHidden) {
+                    setShowHeaderLandscape(false);
+                    setShowFooterLandscape(false);
+                } else {
+                    setShowHeaderLandscape(true);
+                    setShowFooterLandscape(true);
+                }
+            }, [barsHidden]);
 
             // Editable planning state
             const [dynamicStoryData, setDynamicStoryData] = useState(storyData.map(s => ({ ...s, teacherNotes: (s.teacherNotes && s.teacherNotes.length > 0) ? s.teacherNotes : ["."] })));
@@ -1188,9 +1263,9 @@
             }
 
             return (
-                <div className={`min-h-screen flex flex-col ${markerActive ? 'marker-active' : ''} ${dualView ? 'dual-view-active' : ''} ${isResizing ? 'select-none' : ''} ${fullImage ? 'full-image-mode' : ''}`}>
+                <div className={`min-h-screen flex flex-col ${markerActive ? 'marker-active' : ''} ${dualView ? 'dual-view-active' : ''} ${isResizing ? 'select-none' : ''} ${fullImage ? 'full-image-mode' : ''} ${barsHidden ? 'bars-hidden' : ''}`}>
                     {/* Header Controls */}
-                    <div className={`w-full glass py-3 px-6 flex justify-between items-center z-50 header-controls ${showHeaderLandscape ? 'landscape-visible' : ''}`}>
+                    <div className={`w-full glass py-3 px-6 flex justify-between items-center z-50 header-controls ${(barsHidden ? '' : 'landscape-visible')} ${showHeaderLandscape ? 'landscape-visible' : ''}`}>
                         <div className="flex items-center gap-4">
                             {/* V2: Landscape close button */}
                             <button onClick={() => setShowHeaderLandscape(false)} className="landscape-close-btn w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-all" style={{ display: 'none' }}>
@@ -1229,26 +1304,36 @@
                         </div>
                     </div>
 
-                    {/* V2: Landscape Toggle Tabs */}
-                    {!showHeaderLandscape && (
-                        <button
-                            onClick={() => setShowHeaderLandscape(true)}
-                            className="landscape-toggle-header"
-                            style={{ display: 'none' }}
-                        >
-                            <Icon name="chevron-down" size={12} />
-                            MENU
-                        </button>
+                    {/* Floating Toggle Buttons (ONLY for Mobile/Tablet in Landscape) */}
+                    {barsHidden && isTablet && (
+                        <>
+                            <button
+                                onClick={() => setBarsHidden(false)}
+                                className="landscape-toggle-header"
+                                style={{ display: 'flex', opacity: 0.9, background: '#d4af37', border: '1px solid black' }}
+                            >
+                                <Icon name="chevron-down" size={12} />
+                                SHOW MENU
+                            </button>
+                            <button
+                                onClick={() => setBarsHidden(false)}
+                                className="landscape-toggle-footer"
+                                style={{ display: 'flex', opacity: 0.9, background: '#d4af37', border: '1px solid black' }}
+                            >
+                                <Icon name="chevron-up" size={12} />
+                                SHOW NAVIGATION
+                            </button>
+                        </>
                     )}
 
-                    {!showFooterLandscape && (
+                    {/* Button to hide bars inside the bars themselves (ONLY for Mobile/Tablet in Landscape) */}
+                    {!barsHidden && isTablet && window.innerWidth > window.innerHeight && (
                         <button
-                            onClick={() => setShowFooterLandscape(true)}
-                            className="landscape-toggle-footer"
-                            style={{ display: 'none' }}
+                            onClick={() => setBarsHidden(true)}
+                            className="fixed top-1/2 right-4 z-[200] bg-[#d4af37] text-black p-2 rounded-full shadow-2xl hover:scale-110 transition-all opacity-80"
+                            title="Hide Bars"
                         >
-                            <Icon name="chevron-up" size={12} />
-                            NAV
+                            <Icon name="minimize" size={20} />
                         </button>
                     )}
 
@@ -1586,7 +1671,7 @@
                     </div>
 
                     {/* Navigation Bar */}
-                    <div className={`w-full glass p-4 flex items-center justify-between z-50 border-t border-white/5 ${showFooterLandscape ? 'landscape-visible' : ''}`}>
+                    <div className={`w-full glass p-4 flex items-center justify-between z-50 border-t border-white/5 ${(barsHidden ? '' : 'landscape-visible')} ${showFooterLandscape ? 'landscape-visible' : ''}`}>
                         <div className="flex gap-2 items-center">
                             <button disabled={pageIndex === 0} onClick={() => changePage(pageIndex - 1)} className="w-12 h-12 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 disabled:opacity-20 transition-all active:scale-90 shadow-xl"><Icon name="chevron-left" size={24} /></button>
 
