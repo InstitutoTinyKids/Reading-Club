@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Girl Who Never Made Mistakes | TEACHER EDITION V2</title>
+
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Nunito:wght@400;600;700&family=Playfair+Display:wght@700;800&family=Outfit:wght@400;600&display=swap');
+
+        :root {
+            --primary: #1a5d4e;
+            --accent: #d4af37;
+            --bg-paper: #fdfaf5;
+            --teacher-panel: #1e272e;
+
+            /* Fluid Typography Scale (responsive-design skill) */
+            --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+            --text-sm: clamp(0.875rem, 0.8rem + 0.375vw, 1rem);
+            --text-base: clamp(1rem, 0.9rem + 0.5vw, 1.125rem);
+            --text-lg: clamp(1.125rem, 1rem + 0.625vw, 1.25rem);
+            --text-xl: clamp(1.25rem, 1rem + 1.25vw, 1.5rem);
+            --text-2xl: clamp(1.5rem, 1.25rem + 1.25vw, 2rem);
+            --text-3xl: clamp(1.875rem, 1.5rem + 1.875vw, 2.5rem);
+            --text-4xl: clamp(2.25rem, 1.75rem + 2.5vw, 3.5rem);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: url('bg.png') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+            min-height: 100vh;
+            min-height: 100dvh;
+            /* Dynamic viewport height for mobile */
+            overflow: hidden;
+            font-size: var(--text-base);
+        }
+
+        .handwriting {
+            font-family: 'Patrick Hand', cursive;
+        }
+
+        .playfair {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .glass-dark {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .book-container {
+            perspective: 2000px;
+            width: 100%;
+            height: calc(100dvh - 140px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(0.5rem, 2vw, 1rem);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .book-card {
+            background: var(--bg-paper);
+            border-radius: 4px 24px 24px 4px;
+            box-shadow: -10px 10px 30px rgba(0, 0, 0, 0.5), inset 20px 0 30px -10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            width: 100%;
+            max-width: 95%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .book-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 30px;
+            background: linear-gradient(to right, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.05) 50%, transparent 100%);
+            z-index: 10;
+            border-radius: 4px 0 0 4px;
+        }
+
+        .paper-texture {
+            background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png');
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* Marker Canvas Overlay */
+        .marker-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 40;
+            pointer-events: none;
+            touch-action: none;
+        }
+
+        .marker-active .marker-layer {
+            pointer-events: auto;
+            cursor: crosshair;
+        }
+
+        /* Teacher Sidebar */
+        .teacher-sidebar {
+            width: 350px;
+            height: 100vh;
+            background: var(--teacher-panel);
+            position: fixed;
+            right: -350px;
+            top: 0;
+            z-index: 100;
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 3px solid var(--accent);
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .teacher-sidebar.active {
+            right: 0;
+        }
+
+        /* Resizer Handle */
+        .resizer {
+            width: 12px;
+            margin: 0 -6px;
+            cursor: col-resize;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            position: relative;
+            background: transparent;
+        }
+
+        .resizer:hover {
+            background: rgba(212, 175, 55, 0.15);
+        }
+
+        .resizer::after {
+            content: '';
+            width: 3px;
+            height: 48px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .resizer:hover::after {
+            background: var(--accent);
+        }
+
+        /* Dual View Mode Height Adjustments */
+        .dual-view-active .book-card {
+            transition: none !important;
+        }
+
+        .is-resizing * {
+            transition: none !important;
+            user-select: none;
+        }
+
+        /* 📝 NOTEBOOK STYLE PANEL 📝 */
+        .note-panel {
+            background: #fffdf0;
+            background-image: radial-gradient(#d1d1d1 1px, transparent 1px);
+            background-size: 20px 20px;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.3);
+            border-left: 2px solid #e5e0c5;
+        }
+
+        .note-header-line {
+            border-bottom: 2px solid #ffcccc;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .note-margin {
+            border-right: 1px solid #ffcccc;
+            width: 40px;
+            height: 100%;
+            position: absolute;
+            left: 0;
+            top: 0;
+            flex-shrink: 0;
+        }
+
+        /* Prevent icon and text deformation */
+        .note-panel button {
+            flex-shrink: 0;
+        }
+
+        .note-panel svg {
+            flex-shrink: 0;
+            min-width: 20px;
+            min-height: 20px;
+        }
+
+        .note-panel input,
+        .note-panel textarea,
+        .note-panel h2,
+        .note-panel h3,
+        .note-panel p,
+        .note-panel div {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 10px;
+        }
+
+        /* 🎯 ADVANCED RESPONSIVE ARCHITECTURE (Skill: responsive-design) 🎯 */
+        :root {
+            --header-h: clamp(60px, 8dvh, 80px);
+            --nav-h: clamp(70px, 10dvh, 90px);
+        }
+
+        /* V2: Smaller header/footer on mobile */
+        @media (max-width: 768px) {
+            :root {
+                --header-h: clamp(48px, 6dvh, 64px);
+                --nav-h: clamp(56px, 7dvh, 72px);
+            }
+        }
+
+        .book-container {
+            container-type: inline-size;
+            container-name: book;
+            perspective: 2000px;
+            width: 100%;
+            height: calc(100dvh - (var(--header-h) + var(--nav-h) + 20px));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(0.5rem, 4cqi, 2rem);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Responsive Layout based on CONTAINER size */
+        @container book (max-width: 650px) {
+            .book-card {
+                flex-direction: column !important;
+                border-radius: 16px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            }
+
+            .book-card>div:first-child {
+                width: 100% !important;
+                height: 35% !important;
+                /* Smaller image to prioritize text */
+                border-right: none;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            }
+
+            .book-card>div:last-child {
+                width: 100% !important;
+                height: 65% !important;
+                /* More space for reading */
+                padding: clamp(1rem, 6cqi, 2rem) !important;
+            }
+
+            .resizer {
+                display: none;
+            }
+
+            .nav-label {
+                display: none !important;
+            }
+
+            .mobile-hide-tooltip {
+                display: none !important;
+            }
+
+            /* Force hide labels on container small */
+        }
+
+        /* 📱 MOBILE NAVIGATION PATTERN 📱 */
+        @media (max-width: 768px) {
+            .header-controls .title-text {
+                display: none;
+            }
+
+            .header-controls .nav-label {
+                display: none !important;
+            }
+
+            /* Enhanced Header for Mobile */
+            .header-controls {
+                height: var(--header-h);
+                padding: 0 1rem;
+            }
+
+            /* V2: Full-Screen Notes Panel on Mobile/Tablet */
+            .note-panel {
+                position: fixed !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                top: 0 !important;
+                height: 100dvh !important;
+                width: 100vw !important;
+                z-index: 200 !important;
+                border-radius: 0 !important;
+                transform: translateY(100%);
+                transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                padding: 2rem 1.5rem 1rem 3rem !important;
+            }
+
+            .note-panel.active {
+                transform: translateY(0);
+            }
+
+            /* Remove bottom sheet handle for full-screen */
+            .note-panel::before {
+                display: none;
+            }
+
+            /* Fix interior clipping in mobile notes */
+            .note-margin {
+                width: 32px;
+            }
+
+            .note-panel h2 {
+                font-size: 1.5rem !important;
+                margin-left: -0.5rem;
+            }
+
+            /* Scale down buttons that are too large on mobile */
+            .note-panel .btn-group-mobile {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                justify-content: center;
+            }
+
+            .note-panel .page-nav-mobile {
+                flex-direction: column;
+                gap: 0.75rem;
+                align-items: center;
+                padding-bottom: 1rem;
+            }
+
+            .desktop-only {
+                display: none !important;
+            }
+
+            /* Mobile Navigation Refinements */
+            .mobile-hide {
+                display: none !important;
+            }
+
+            .text-content-area {
+                padding: 1.25rem !important;
+                overflow-y: auto !important;
+                max-height: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .internal-footer {
+                font-size: 9px !important;
+                letter-spacing: 0.2em !important;
+                margin-top: auto;
+                padding-top: 2rem;
+                padding-bottom: 1rem;
+                opacity: 0.3;
+                display: flex;
+                justify-content: center;
+                gap: 1rem;
+                width: auto;
+            }
+
+            .size-control-mobile {
+                padding: 0.5rem !important;
+                gap: 0.5rem !important;
+            }
+
+            .size-control-mobile span {
+                display: none !important;
+            }
+
+            /* Responsive Text */
+            p {
+                font-size: var(--text-lg) !important;
+                line-height: 1.6;
+            }
+        }
+
+        /* V2: Hide progress bar and chapter info on very small screens */
+        @media (max-width: 600px) {
+
+            .progress-container,
+            .chapter-indicator {
+                display: none !important;
+            }
+        }
+
+        /* V2: LANDSCAPE MOBILE OPTIMIZATION - Maximize content area */
+        @media (max-width: 926px) and (orientation: landscape) {
+            :root {
+                --header-h: 44px !important;
+                --nav-h: 48px !important;
+            }
+
+            /* Hide all decorative text elements */
+            .internal-footer {
+                display: none !important;
+            }
+
+            /* Hide page number in text area */
+            .text-content-area>div:first-child {
+                display: none !important;
+            }
+
+            /* Reduce padding in book card */
+            .text-content-area {
+                padding: 1rem 2rem !important;
+            }
+
+            .image-area {
+                padding: 0.5rem !important;
+            }
+
+            /* Hide chapter indicator and progress bar */
+            .progress-container,
+            .chapter-indicator {
+                display: none !important;
+            }
+
+            /* Auto-hide header - slides down from top */
+            .header-controls {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                z-index: 200 !important;
+                transform: translateY(-100%) !important;
+                transition: transform 0.3s ease !important;
+                padding: 0.5rem 1rem !important;
+                height: 44px !important;
+                background: rgba(0, 0, 0, 0.95) !important;
+                backdrop-filter: blur(10px) !important;
+            }
+
+            .header-controls.landscape-visible {
+                transform: translateY(0) !important;
+            }
+
+            /* Hide scene badge in landscape */
+            .image-area .glass-dark {
+                display: none !important;
+            }
+
+            /* Maximize book container - full viewport */
+            .book-container {
+                height: 100dvh !important;
+                padding: 0 !important;
+            }
+
+            /* Reduce image padding */
+            .image-area img {
+                padding: 0.5rem !important;
+            }
+
+            /* Smaller buttons in landscape */
+            .header-controls button {
+                padding: 0.25rem 0.5rem !important;
+                font-size: 9px !important;
+                height: 32px !important;
+            }
+
+            .header-controls button[class*="w-10"] {
+                width: 32px !important;
+                height: 32px !important;
+                min-width: 32px !important;
+            }
+
+            .header-controls button[class*="w-12"] {
+                width: 36px !important;
+                height: 36px !important;
+                min-width: 36px !important;
+            }
+
+            .btn-group button {
+                padding: 0.25rem 0.5rem !important;
+                font-size: 9px !important;
+            }
+
+            /* Hide button labels in landscape to save space */
+            .nav-label {
+                display: none !important;
+            }
+
+            /* Toggle tabs - floating buttons */
+            .landscape-toggle-header,
+            .landscape-toggle-footer {
+                position: fixed !important;
+                z-index: 150 !important;
+                background: rgba(212, 175, 55, 0.9) !important;
+                color: black !important;
+                border: none !important;
+                padding: 0.5rem 1rem !important;
+                font-size: 10px !important;
+                font-weight: bold !important;
+                cursor: pointer !important;
+                transition: all 0.3s ease !important;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+                display: flex !important;
+                /* Override inline display:none */
+                align-items: center !important;
+                gap: 0.25rem !important;
+            }
+
+            .landscape-toggle-header {
+                top: 0 !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                border-radius: 0 0 8px 8px !important;
+            }
+
+            .landscape-toggle-footer {
+                bottom: 0 !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                border-radius: 8px 8px 0 0 !important;
+            }
+
+            .landscape-toggle-header:hover,
+            .landscape-toggle-footer:hover {
+                background: rgba(212, 175, 55, 1) !important;
+            }
+
+            /* Auto-hide footer/navigation - slides up from bottom */
+            .min-h-screen>.glass:last-of-type {
+                position: fixed !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                z-index: 200 !important;
+                transform: translateY(100%) !important;
+                transition: transform 0.3s ease !important;
+                background: rgba(0, 0, 0, 0.95) !important;
+                backdrop-filter: blur(10px) !important;
+            }
+
+            .min-h-screen>.glass:last-of-type.landscape-visible {
+                transform: translateY(0) !important;
+            }
+
+            /* V2: Cover page landscape optimization - VERTICAL LAYOUT */
+            body>div>div.min-h-screen {
+                padding: 1.5rem 2rem !important;
+                justify-content: center !important;
+            }
+
+            body>div>div.min-h-screen .max-w-lg {
+                max-width: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 0.75rem !important;
+                align-items: center !important;
+                text-align: center !important;
+            }
+
+            /* Reorder elements: header, image, content */
+            body>div>div.min-h-screen .max-w-lg>div:nth-child(1) {
+                order: 0 !important;
+                margin-bottom: 0.25rem !important;
+            }
+
+            /* Book cover image second - HIDDEN in landscape */
+            body>div>div.min-h-screen .max-w-lg>div:nth-child(2) {
+                display: none !important;
+            }
+
+            body>div>div.min-h-screen .max-w-lg>div:nth-child(3) {
+                order: 2 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                gap: 0.5rem !important;
+            }
+
+            body>div>div.min-h-screen .max-w-lg img {
+                width: 120px !important;
+                height: auto !important;
+            }
+
+            body>div>div.min-h-screen .max-w-lg h1 {
+                font-size: 1.5rem !important;
+                margin-bottom: 0.25rem !important;
+                line-height: 1.2 !important;
+            }
+
+            body>div>div.min-h-screen .max-w-lg p {
+                font-size: 0.7rem !important;
+                margin-bottom: 0.5rem !important;
+            }
+
+            body>div>div.min-h-screen .max-w-lg button {
+                padding: 0.5rem 2.5rem !important;
+                font-size: 0.875rem !important;
+            }
+
+
+            /* Show close buttons only in landscape */
+            .landscape-close-btn {
+                display: flex !important;
+            }
+        }
+
+        @media (orientation: portrait) {
+            .book-card {
+                flex-direction: column !important;
+            }
+
+            .book-card>div {
+                width: 100% !important;
+                height: auto !important;
+                min-height: 40dvh;
+            }
+
+            /* V2: Fix notes panel in portrait mode */
+            .note-panel {
+                padding: 2rem 1.5rem 1rem 2.5rem !important;
+            }
+
+            .note-panel h2 {
+                margin-left: 0 !important;
+            }
+
+            .note-margin {
+                width: 24px !important;
+            }
+        }
+
+        /* Story text scrollbar style */
+        .text-content-area::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .text-content-area::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 10px;
+        }
+
+        /* Cinematic Full Screen Illustration Mode */
+        .full-image-mode .image-area {
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100vw !important;
+            height: 100dvh !important;
+            z-index: 9999 !important;
+            background: #000 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border: none !important;
+            border-radius: 0 !important;
+        }
+
+        .full-image-mode .image-area img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain !important;
+            padding: 0 !important;
+        }
+
+        .full-image-mode .marker-layer {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 10000 !important;
+        }
+
+        .full-image-mode .image-expand-btn {
+            position: fixed !important;
+            top: 2rem;
+            right: 2rem;
+            /* Move to right for better visibility */
+            left: auto !important;
+            z-index: 10001 !important;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.3);
+            width: 50px;
+            height: 50px;
+        }
+
+        .full-image-mode .image-expand-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            color: #d4af37;
+        }
+
+        .full-image-mode header,
+        .full-image-mode .glass,
+        .full-image-mode .teacher-sidebar {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        /* 🚀 PAGE JUMP PREMIUM STYLING 🚀 */
+        .page-jump-group {
+            background: rgba(0, 0, 0, 0.4) !important;
+            border: 1px solid rgba(212, 175, 55, 0.3) !important;
+            border-radius: 12px !important;
+            padding: 2px 8px !important;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .page-jump-group:focus-within {
+            border-color: #d4af37 !important;
+            background: rgba(0, 0, 0, 0.6) !important;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .page-jump-input {
+            width: 35px !important;
+            height: 32px !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            color: #d4af37 !important;
+            background: transparent !important;
+            border: none !important;
+            outline: none !important;
+            text-align: center !important;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Hide arrows in number input */
+        .page-jump-input::-webkit-outer-spin-button,
+        .page-jump-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .page-jump-btn {
+            background: #d4af37 !important;
+            color: black !important;
+            width: 24px !important;
+            height: 24px !important;
+            border-radius: 6px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            margin-left: 4px;
+        }
+
+        .page-jump-btn:hover {
+            background: white !important;
+            transform: scale(1.1);
+        }
+
+        /* V2: Collapsible Dropdown Styles */
+        .dropdown-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 12px;
+            padding: 8px;
+            min-width: 180px;
+            z-index: 1000;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            animation: dropdownFadeIn 0.2s ease-out;
+        }
+
+        @keyframes dropdownFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-menu button {
+            width: 100%;
+            text-align: left;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dropdown-menu button:hover {
+            background: rgba(212, 175, 55, 0.2);
+        }
+
+        .dropdown-menu button.active {
+            background: rgba(212, 175, 55, 0.3);
+            color: #d4af37;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        const storyData = [
+            { id: 1, pages: "4", imageUrl: "images_extracted/page_4.png", imageAlt: "Beatrice in bed", textEn: "For Beatrice Bottomwell, Friday began like any other day.", textEs: "Para Beatrice Bottomwell, el viernes comenzó como cualquier otro día.", audioEn: "audio01.wav", audioEs: "audio01_es.wav", teacherNotes: ["Vocabulary: 'Like any other day' - routine.", "Ask: What time do you wake up?", "Point to: The bed, the window."] },
+            { id: 2, pages: "5", imageUrl: "images_extracted/page_5.png", imageAlt: "Matching socks", textEn: "She matched her socks. And, of course, she put her shoes on their proper feet.", textEs: "Emparejó sus calcetines. Y, por supuesto, se puso los zapatos en los pies correctos.", audioEn: "audio02.wav", audioEs: "audio02_es.wav", teacherNotes: ["Goal: Past simple 'matched', 'put'.", "Activity: Do you match your socks?", "Pronunciation: 'Proper feet'."] },
+            { id: 3, pages: "6", imageUrl: "images_extracted/page_6.png", imageAlt: "Hamster and sandwich", textEn: "She remembered to feed her hamster, Humbert, his favorite food, broccoli.\n\nAnd when she made a sandwich for her brother Carl's lunch, she used exactly the same amount of peanut butter as jelly.", textEs: "Se acordó de alimentar a su hámster, Humbert, con su comida favorita: brócoli.\n\nY cuando le preparó un sándwich a su hermano Carl para el almuerzo, usó exactamente la misma cantidad de mantequilla de maní que de mermelada.", audioEn: "audio03.wav", audioEs: "audio03_es.wav", teacherNotes: ["Character Info: Humbert likes broccoli.", "Concept: 'Exactly the same amount' - perfectionism.", "Ask: Do you like hamsters?"] },
+            { id: 4, pages: "7", imageUrl: "images_extracted/page_7.png", imageAlt: "Greeting fans", textEn: "When she stepped outside to greet her fans, she didn't forget to say 'good morning' and 'thank you.'", textEs: "Cuando salió a saludar a sus fans, no olvidó decir 'buenos días' y 'gracias'.", audioEn: "audio04.wav", audioEs: "audio04_es.wav", teacherNotes: ["Social Skill: Manners (Good morning/Thank you).", "Observe: She has fans! Why?", "Vocab: Greet."] },
+            { id: 5, pages: "8", imageUrl: "images_extracted/page_8.png", imageAlt: "Talent show prep", textEn: "They asked if she made her bed. She had.\n\nThey asked if she forgot to do her math homework. Nope.\n\n'What about tonight's talent show?' they asked. 'I'm ready!' said Beatrice with a smile. After all, her juggling act had won three years in a row.", textEs: "¿Hiciste la cama? Sí. ¿Tarea de matemáticas? No.\n\n'¿Y el show de talentos?', preguntaron. '¡Lista!', dijo Beatrice. Su acto de malabares había ganado tres años seguidos.", audioEn: "audio05.wav", audioEs: "audio05_es.wav", teacherNotes: ["Check Homework: Discuss math importance.", "Talent Show: What's their talent?", "Winning Streak: 3 years in a row!"] },
+            { id: 6, pages: "9", imageUrl: "images_extracted/page_9.png", imageAlt: "The girl who never makes mistakes", textEn: "Most people in town didn't even know Beatrice's name. \n\nThey just called her 'the Girl Who Never Makes Mistakes,' because for as long as anyone could remember, she never did.", textEs: "Mucha gente ni sabía su nombre. La llamaban 'la Chica Que Nunca Comete Errores', porque nunca lo había hecho.", audioEn: "audio06.wav", audioEs: "audio06_es.wav", teacherNotes: ["Identity: Living with a label.", "Discussion: Is it good to NEVER make mistakes?", "Predictions: What might happen next?"] },
+            { id: 7, pages: "10", imageUrl: "images_extracted/page_10.png", imageAlt: "Carl's mistakes", textEn: "Unlike Beatrice, Carl made lots of mistakes.\n\nHe ate his crayons and drew with his green beans. \n\nHe danced with his hands and played the piano with his feet. \n\nCarl loved to make mistakes!", textEs: "A diferencia de Beatrice, Carl cometía muchos errores. Comía crayones y bailaba con las manos. ¡A Carl le encantaba cometer errores!", audioEn: "audio07.wav", audioEs: "audio07_es.wav", teacherNotes: ["Contrast: Carl vs Beatrice.", "Funny Vocab: Eating crayons, Green beans.", "Theme: Having fun vs Being perfect."] },
+            { id: 8, pages: "11", imageUrl: "images_extracted/page_11.png", imageAlt: "Cooking team eggs", textEn: "At school, Beatrice was on a cooking team with her two best friends, Millie and Sarah. To make their giant rhubarb muffins, they needed four eggs.\n\nBeatrice went to the refrigerator and carefully chose the biggest, eggiest eggs she could find.", textEs: "En la escuela, Beatrice estaba en un equipo de cocina. Necesitaban cuatro huevos para los muffins de ruibarbo. Beatrice fue al refrigerador y eligió los mejores huevos.", audioEn: "audio08.wav", audioEs: "audio08_es.wav", teacherNotes: ["Cooking Vocab: Muffins, Eggs, Rhubarb.", "Teamwork: Working with Millie and Sarah.", "Observation: Why 'eggiest' eggs?"] },
+            { id: 9, pages: "12", imageUrl: "images_extracted/page_12.png", imageAlt: "The slip", textEn: "But on the way back, her legs slipped out from under her. \n\nThe eggs went flying.\n\nBeatrice was about to make her first mistake...", textEs: "Pero al volver, sus piernas resbalaron. ¡Los huevos salieron volando!\n\nBeatrice estaba a punto de cometer su primer error...", audioEn: "audio09.wav", audioEs: "audio09_es.wav", teacherNotes: ["Tension: Use the marker to point to the flying eggs!", "Action word: Slipped.", "Pause: Ask students what they think will happen."] },
+            { id: 10, pages: "13", imageUrl: "images_extracted/page_13.png", imageAlt: "The catch", textEn: "But she didn't! 'That was close!' thought Beatrice.\n\n'Sorry, Beatrice... I dropped a piece of rhubarb.'\n\n'-on't -ention it, -illie.'", textEs: "¡Pero no lo hizo! '¡Estuvo cerca!', pensó Beatrice.\n\n'Perdona, Beatrice... se me cayó un trozo de ruibarbo'.\n\n'No tiene importancia, Millie'.", audioEn: "audio10.wav", audioEs: "audio10_es.wav", teacherNotes: ["Exclamation: 'That was close!'.", "Manners: 'Don't mention it'.", "Discussion: Was she lucky bit or just fast?"] },
+            { id: 11, pages: "14", imageUrl: "images_extracted/page_14.png", imageAlt: "Thinking about it", textEn: "For the rest of the school day, Beatrice could not stop thinking about her Almost Mistake.", textEs: "El resto del día escolar, Beatrice no pudo dejar de pensar en su 'Casi Error'.", audioEn: "audio11.wav", audioEs: "audio11_es.wav", teacherNotes: ["Emotions: Anxiety/Worry.", "Ask: Have you ever been worried about a 'near miss'?", "Context: The 'Almost Mistake'."] },
+            { id: 12, pages: "15", imageUrl: "images_extracted/page_15.png", imageAlt: "Ice skating", textEn: "On her way home from school, Beatrice watched Millie and Sarah ice-skating in the park.\n\n'Come join us!' said Millie. 'It's fun!' said Sarah.\n\nBeatrice watched them slip and slide on the frozen pond. Millie and Sarah laughed as they wobbled on the ice.\n\n'No, thanks,' said Beatrice.", textEs: "De camino a casa desde la escuela, Beatrice vio a Millie y Sarah patinando en el parque.\n\n'¡Vengan con nosotras!', dijo Millie. '¡Es divertido!', dijo Sarah.\n\nBeatrice las vio resbalar y deslizarse en el estanque congelado. Millie y Sarah se reían mientras se tambaleaban en el hielo.\n\n'No, gracias', dijo Beatrice.", audioEn: "audio12.wav", audioEs: "audio12_es.wav", teacherNotes: ["Avoiding risk: Why doesn't she join?", "Contrast: Laughing while falling vs Staying safe.", "Vocab: Frozen pond, Wobbled."] },
+            { id: 13, pages: "16", imageUrl: "images_extracted/page_16.png", imageAlt: "Dinner worry", textEn: "At supper, Beatrice barely touched her food.\n\n'Is everything all right, kiddo?' asked her father.\n\n'I'm worried I'll mess up tonight,' said Beatrice. 'And everyone will be watching.'\n\n'Worry? You don't make mistakes!' he said with a smile.\n\nBeatrice tried to smile too.", textEs: "En la cena, Beatrice apenas probó bocado.\n\n'¿Está todo bien, pequeña?', preguntó su padre.\n\n'Me preocupa fallar esta noche', dijo Beatrice. 'And everyone will be watching.'\n\n'¿Preocuparte? ¡Tú no cometes errores!', dijo él con una sonrisa. Beatrice intentó sonreír también.", audioEn: "audio13.wav", audioEs: "audio13_es.wav", teacherNotes: ["Family: Dad is supportive but adds pressure.", "Vocab: Mess up.", "Feelings: Fear of judgment."] },
+            { id: 14, pages: "17", imageUrl: "images_extracted/page_17.png", imageAlt: "Pre-show setup", textEn: "After supper, Beatrice got ready for the talent show.\n\nFirst, she woke Humbert from his nap. \n\nNext, she got the salt shaker from the kitchen table. \n\nFinally, she filled a balloon with water.", textEs: "Tras la cena, se preparó para el show. Despertó a Humbert, tomó el salero y llenó un globo con agua.", audioEn: "audio14.wav", audioEs: "audio14_es.wav", teacherNotes: ["Sequence: First, Next, Finally.", "Prediction Warning: Salt shaker and water balloon? Suspicious!", "Ask: What kind of act is she doing?"] },
+            { id: 15, pages: "18", imageUrl: "images_extracted/page_18.png", imageAlt: "On stage", textEn: "The school auditorium was packed! Beatrice felt her stomach jumping around inside her.", textEs: "¡El auditorio estaba lleno! Beatrice sentía mariposas en el estómago.", audioEn: "audio15.wav", audioEs: "audio15_es.wav", teacherNotes: ["Idiom: Butterflies in stomach (Jumping around).", "Vocab: Packed, Auditorium.", "Activity: Point to Beatrice's face - how DOES she feel?"] },
+            { id: 16, pages: "19", imageUrl: "images_extracted/page_19.png", imageAlt: "Perfect reputation", textEn: "Beatrice waited for her juggling music to begin. \n\n'That's her! That's the Girl Who Never Makes Mistakes!' said a woman.\n\n'Oh! We know she'll be perfect!' said a man.\n\nWhen the music started, she tossed Humbert into the air.\n\nNext, she added the salt shaker.\n\nAnd finally, the water balloon.", textEs: "'¡Es ella! ¡La chica que nunca comete errores!', dijo una mujer. '¡Sabemos que será perfecta!', dijo un hombre.\n\nCuando empezó la música, lanzó a Humbert, luego el salero y el globo.", audioEn: "audio16.wav", audioEs: "audio16_es.wav", teacherNotes: ["Pressure: What do the people say?", "Sequence: Tossing objects.", "Ask: Can you juggle?"] },
+            { id: 17, pages: "20", imageUrl: "images_extracted/page_20.png", imageAlt: "Something odd", textEn: "Beatrice didn't miss a beat! The crowd clapped with delight.\n\nBut Beatrice noticed something odd about the salt shaker...\n\nThe specks falling out of it were not white!", textEs: "¡No perdió el ritmo! La multitud aplaudía. Pero Beatrice notó algo raro en el salero... ¡Las motas no eran blancas!", audioEn: "audio17.wav", audioEs: "audio17_es.wav", teacherNotes: ["Mystery: What's in the shaker? (Pepper!).", "Point to: The 'dots' falling out.", "Vocab: Specks."] },
+            { id: 18, pages: "21", imageUrl: "images_extracted/page_21.png", imageAlt: "AAHHCH", textEn: "AAHHCH...", textEs: "¡¡¡AAHHCH!!!", audioEn: "audio18.wav", audioEs: "audio18_es.wav", teacherNotes: ["Sound Effect: Sneeze!", "Ask: Who is sneezing?"] },
+            { id: 19, pages: "22", imageUrl: "images_extracted/page_22.png", imageAlt: "OOO!!!", textEn: "OOO!!!", textEs: "¡¡¡OOO!!!", audioEn: "audio19.wav", audioEs: "audio19_es.wav", teacherNotes: ["Exclamation: Anticipation."] },
+            { id: 20, pages: "23", imageUrl: "images_extracted/page_23.png", imageAlt: "KABLOOIE", textEn: "Humbert was so surprised by his sneeze that he grabbed the water balloon with his claws.\n\nKABLOOIE!", textEs: "Humbert se sorprendió tanto por su estornudo que agarró el globo de agua con sus garras.\n\n¡KABLOOIE!", audioEn: "audio20.wav", audioEs: "audio20_es.wav", teacherNotes: ["Onomatopoeia: KABLOOIE.", "Action: Claws grabbing the balloon.", "Climax: The mistake is happening!"] },
+            { id: 21, pages: "24", imageUrl: "images_extracted/page_24.png", imageAlt: "Mistake aftermath", textEn: "Humbert, pieces of water balloon, and the pepper rained down on top of Beatrice.\n\nFor the first time in as long as anyone could remember, Beatrice made a mistake.\n\nAnd it was a big one!", textEs: "Humbert, trozos de globo y pimienta cayeron sobre ella. ¡Por primera vez, Beatrice cometió un error! ¡Y uno grande!", audioEn: "audio21.wav", audioEs: "audio21_es.wav", teacherNotes: ["The Moment: The BIG Mistake.", "Ask: Is she hurt? Is she sad?", "Vocab: Rained down."] },
+            { id: 22, pages: "25", imageUrl: "images_extracted/page_25.png", imageAlt: "Music stops", textEn: "The music stopped.\n\nBeatrice didn't know what to do. Cry?\n\nRun off the stage?", textEs: "La música se detuvo. Beatrice no sabía qué hacer. ¿Llorar? ¿Huir del escenario?", audioEn: "audio22.wav", audioEs: "audio22_es.wav", teacherNotes: ["Options: Cry? Run?", "Ask: What would you do?"] },
+            { id: 23, pages: "26", imageUrl: "images_extracted/page_26.png", imageAlt: "Stunned crowd", textEn: "The crowd sat stunned. They couldn't believe that the Girl Who Never Makes Mistakes made a mistake!", textEs: "La multitud estaba atónita. ¡No podían creer que ella cometiera un error!", audioEn: "audio23.wav", audioEs: "audio23_es.wav", teacherNotes: ["Vocab: Stunned.", "Observe: The audience's faces."] },
+            { id: 24, pages: "27", imageUrl: "images_extracted/page_27.png", imageAlt: "Giggle", textEn: "Beatrice looked up at Humbert.\n\nHe looked back at her.\n\nHis hamster fur was soaked and speckled with bits of balloon.\n\nBeatrice let out a giggle. The giggle grew into a chuckle. And the chuckle became a laugh.", textEs: "Beatrice miró a Humbert. Estaba empapado con trozos de globo. Soltó una risita, que se convirtió en carcajada y luego en risa.", audioEn: "audio24.wav", audioEs: "audio24_es.wav", teacherNotes: ["The Shift: From sadness to laughter.", "Vocab: Giggle, Chuckle, Laugh - different levels of laughing.", "Action: Imitate the different laughs!"] },
+            { id: 25, pages: "28", imageUrl: "images_extracted/page_28.png", imageAlt: "Shared laughter", textEn: "The people in the crowd looked at each other and then back at Beatrice. They began to giggle. Then chuckle. Then-finally-roar with laughter.\n\nBeatrice and the audience laughed until they couldn't remember why they were laughing.", textEs: "La gente se miró y luego miró a Beatrice. Empezaron a reír. Al final, todos rugieron de risa hasta olvidar por qué se reían.", audioEn: "audio25.wav", audioEs: "audio25_es.wav", teacherNotes: ["Group Connection: Shared laughter heals.", "Vocab: Roar with laughter.", "Point: Everyone is laughing together."] },
+            { id: 26, pages: "29", imageUrl: "images_extracted/page_29.png", imageAlt: "Peaceful sleep", textEn: "That night, Beatrice slept better than she ever had!", textEs: "¡Esa noche, Beatrice durmió mejor que nunca!", audioEn: "audio26.wav", audioEs: "audio26_es.wav", teacherNotes: ["Relief: The pressure is gone.", "Ask: Why did she sleep better?"] },
+            { id: 27, pages: "30", imageUrl: "images_extracted/page_30.png", imageAlt: "Funny socks", textEn: "In the morning, no fans greeted Beatrice.\n\nWhen she got dressed, Beatrice for no reason at all-put a polka dot sock on one foot and a plaid sock on the other.", textEs: "A la mañana no había admiradores. Al vestirse, se puso un calcetín de lunares y otro de cuadros.", audioEn: "audio27.wav", audioEs: "audio27_es.wav", teacherNotes: ["Change: Polka dot vs Plaid.", "Discussion: Matching vs Mismatching.", "Freedom: 'For no reason at all'."] },
+            { id: 28, pages: "31", imageUrl: "images_extracted/page_31.png", imageAlt: "Inside out sandwich", textEn: "Beatrice and Carl made sandwiches. This time, they put the peanut butter and jelly on the outside. They called it an Inside Out PB & J! \n\nLunch was messy and delicious!", textEs: "Beatrice y Carl hicieron sándwiches con los ingredientes por fuera. ¡Fue un almuerzo desordenado y rico!", audioEn: "audio28.wav", audioEs: "audio28_es.wav", teacherNotes: ["Messy Fun: Outside-in sandwiches.", "Activity: Design your own 'messy' sandwich!"] },
+            { id: 29, pages: "32", imageUrl: "images_extracted/page_32.png", imageAlt: "Skating fun", textEn: "Later, Beatrice found Millie and Sarah skating in the park. \n\nThey fell a lot. And laughed!", textEs: "Luego patinó con sus amigas. Se cayeron mucho. ¡Y se rieron!", audioEn: "audio29.wav", audioEs: "audio29_es.wav", teacherNotes: ["Integration: She joins them now.", "Message: It's okay to fall."] },
+            { id: 30, pages: "33", imageUrl: "images_extracted/page_33.png", imageAlt: "Just Beatrice", textEn: "Now, people no longer call her the Girl Who Never Makes Mistakes. \n\nThey just call her Beatrice.", textEs: "Ahora ya no la llaman la Chica Que Nunca Comete Errores. Simplemente la llaman Beatrice.", audioEn: "audio30.wav", audioEs: "audio30_es.wav", teacherNotes: ["Conclusion: A new name, a new identity."] },
+            { id: 31, pages: "34", imageUrl: "images_extracted/page_34.png", imageAlt: "Epilogue", textEn: "Beatrice Bottomwell has NEVER (not once!) made a mistake...", textEs: "Beatrice Bottomwell NUNCA (¡ni una sola vez!) ha cometido un error...", audioEn: "audio31.wav", audioEs: "audio31_es.wav", teacherNotes: ["Irony: The final joke."] },
+            { id: 32, pages: "End", imageUrl: "images_extracted/page_1.png", imageAlt: "The End", textEn: "THE END", textEs: "FIN", audioEn: "audio32.wav", audioEs: "audio32_es.wav", teacherNotes: ["Final Recap.", "Good job students!"] }
+        ];
+
+        const Icon = ({ name, size = 20, color = 'currentColor', className = "" }) => {
+            const iconRef = useRef(null);
+            useEffect(() => {
+                if (window.lucide && iconRef.current) {
+                    const lucideName = name.toLowerCase().replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+                    iconRef.current.setAttribute('data-lucide', lucideName);
+                    window.lucide.createIcons();
+                }
+            }, [name]);
+            return <i ref={iconRef} style={{ display: 'inline-block', width: size, height: size }} className={className}></i>;
+        };
+
+        function App() {
+            const [view, setView] = useState('cover');
+            const [pageIndex, setPageIndex] = useState(0);
+            const [lang, setLang] = useState('en');
+            const [speaking, setSpeaking] = useState(false);
+            const [teacherMode, setTeacherMode] = useState(false);
+            const [markerActive, setMarkerActive] = useState(false);
+            const [dualView, setDualView] = useState(false);
+            const [textSize, setTextSize] = useState(1.4);
+            const [turning, setTurning] = useState(false);
+            const [showStudyNotes, setShowStudyNotes] = useState(false);
+            const [isEditingNotes, setIsEditingNotes] = useState(false);
+            const [notesPage, setNotesPage] = useState(0);
+            const [fullImage, setFullImage] = useState(false);
+
+            // V2: Collapsible UI Controls
+            const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+            const [showSizeControl, setShowSizeControl] = useState(false);
+            const [showPageJump, setShowPageJump] = useState(false);
+
+            // V2: Landscape auto-hide bars
+            const [showHeaderLandscape, setShowHeaderLandscape] = useState(false);
+            const [showFooterLandscape, setShowFooterLandscape] = useState(false);
+
+            const [notesData, setNotesData] = useState({
+                mainTitle: 'Creative Writing & Study Notes',
+                pages: [
+                    {
+                        sections: [
+                            { title: 'Vocabulary Focus', content: '' },
+                            { title: 'Discussion Questions', content: '' },
+                            { title: 'Activities', content: '' },
+                            { title: 'Writing Tips', content: '' }
+                        ]
+                    }
+                ]
+            });
+
+            // Editable planning state
+            const [dynamicStoryData, setDynamicStoryData] = useState(storyData.map(s => ({ ...s, teacherNotes: (s.teacherNotes && s.teacherNotes.length > 0) ? s.teacherNotes : ["."] })));
+            const [isEditingPlanning, setIsEditingPlanning] = useState(false);
+            const [jumpTo, setJumpTo] = useState("");
+
+            // Resizer State
+            const [splitPercent, setSplitPercent] = useState(50);
+            const [isResizing, setIsResizing] = useState(false);
+            const bookCardRef = useRef(null);
+
+            // In-Class Action States
+            const [timerValue, setTimerValue] = useState(null);
+            const timerRef = useRef(null);
+
+            const audioRef = useRef(null);
+            const canvasRef = useRef(null);
+            const canvasContainerRef = useRef(null);
+
+            const currentStory = dynamicStoryData[pageIndex];
+
+            // --- RE-SYNC CANVAS ON LAYOUT CHANGE ---
+            const syncCanvas = () => {
+                if (canvasRef.current) {
+                    if (fullImage && canvasContainerRef.current) {
+                        // Full image mode: canvas matches the image container
+                        const rect = canvasContainerRef.current.getBoundingClientRect();
+                        canvasRef.current.width = rect.width;
+                        canvasRef.current.height = rect.height;
+                    } else if (markerActive && bookCardRef.current) {
+                        // Regular view with marker: canvas covers entire book surface
+                        const rect = bookCardRef.current.getBoundingClientRect();
+                        canvasRef.current.width = rect.width;
+                        canvasRef.current.height = rect.height;
+                    }
+                }
+            };
+
+            useEffect(() => {
+                syncCanvas();
+                const timeout = setTimeout(syncCanvas, 100);
+                window.addEventListener('resize', syncCanvas);
+                return () => {
+                    window.removeEventListener('resize', syncCanvas);
+                    clearTimeout(timeout);
+                };
+            }, [view, teacherMode, pageIndex, splitPercent, dualView, fullImage]);
+
+            // --- SWIPE GESTURES FOR MOBILE ---
+            const touchStartX = useRef(null);
+            const handleTouchStart = (e) => {
+                // Don't capture touch if marker is active (drawing mode)
+                if (markerActive || fullImage) return;
+                touchStartX.current = e.touches[0].clientX;
+            };
+            const handleTouchEnd = (e) => {
+                // Don't process swipe if marker is active (drawing mode)
+                if (markerActive || fullImage) return;
+                if (!touchStartX.current) return;
+                const touchEndX = e.changedTouches[0].clientX;
+                const diffX = touchStartX.current - touchEndX;
+
+                if (Math.abs(diffX) > 50) { // Swipe threshold
+                    if (diffX > 0) {
+                        changePage(pageIndex + 1); // Swipe Left -> Next
+                    } else {
+                        changePage(pageIndex - 1); // Swipe Right -> Prev
+                    }
+                }
+                touchStartX.current = null;
+            };
+
+            useEffect(() => {
+                const bookCard = bookCardRef.current;
+                if (bookCard) {
+                    bookCard.addEventListener('touchstart', handleTouchStart);
+                    bookCard.addEventListener('touchend', handleTouchEnd);
+                    return () => {
+                        bookCard.removeEventListener('touchstart', handleTouchStart);
+                        bookCard.removeEventListener('touchend', handleTouchEnd);
+                    };
+                }
+            }, [pageIndex, view, markerActive, fullImage]);
+
+            // --- RESIZER LOGIC ---
+            const startResizing = (e) => {
+                e.preventDefault();
+                setIsResizing(true);
+                document.body.classList.add('is-resizing');
+
+                let animationFrame;
+                const handleMouseMove = (moveEvent) => {
+                    if (animationFrame) cancelAnimationFrame(animationFrame);
+
+                    animationFrame = requestAnimationFrame(() => {
+                        if (bookCardRef.current) {
+                            const rect = bookCardRef.current.getBoundingClientRect();
+                            const clientX = moveEvent.touches ? moveEvent.touches[0].clientX : moveEvent.clientX;
+                            let newPercent = ((clientX - rect.left) / rect.width) * 100;
+                            newPercent = Math.max(25, Math.min(75, newPercent));
+                            setSplitPercent(newPercent);
+                        }
+                    });
+                };
+
+                const handleMouseUp = () => {
+                    setIsResizing(false);
+                    document.body.classList.remove('is-resizing');
+                    if (animationFrame) cancelAnimationFrame(animationFrame);
+                    window.removeEventListener('mousemove', handleMouseMove);
+                    window.removeEventListener('mouseup', handleMouseUp);
+                    window.removeEventListener('touchmove', handleMouseMove);
+                    window.removeEventListener('touchend', handleMouseUp);
+                    document.body.style.cursor = 'default';
+                };
+
+                window.addEventListener('mousemove', handleMouseMove);
+                window.addEventListener('mouseup', handleMouseUp);
+                window.addEventListener('touchmove', handleMouseMove);
+                window.addEventListener('touchend', handleMouseUp);
+                document.body.style.cursor = 'col-resize';
+            };
+
+            // --- IN-CLASS ACTIONS LOGIC ---
+            const toggleTimer = () => {
+                if (timerRef.current) {
+                    clearInterval(timerRef.current);
+                    timerRef.current = null;
+                    setTimerValue(null);
+                } else {
+                    let seconds = 0;
+                    setTimerValue("0:00");
+                    timerRef.current = setInterval(() => {
+                        seconds++;
+                        const m = Math.floor(seconds / 60);
+                        const s = seconds % 60;
+                        setTimerValue(`${m}:${s.toString().padStart(2, '0')}`);
+                    }, 1000);
+                }
+            };
+
+            const handleUpdateNote = (idx, value) => {
+                const newData = [...dynamicStoryData];
+                newData[pageIndex].teacherNotes[idx] = value;
+                setDynamicStoryData(newData);
+            };
+
+            const addDiscussionNote = () => {
+                const newData = [...dynamicStoryData];
+                if (!newData[pageIndex].teacherNotes) newData[pageIndex].teacherNotes = [];
+                newData[pageIndex].teacherNotes.push(".");
+                setDynamicStoryData(newData);
+            };
+
+            // Canvas Drawing Logic
+            const [isDrawing, setIsDrawing] = useState(false);
+            const startDrawing = (e) => {
+                if (!markerActive && !fullImage) return;
+                setIsDrawing(true);
+                const ctx = canvasRef.current.getContext('2d');
+                const rect = canvasRef.current.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                ctx.beginPath();
+                ctx.moveTo(clientX - rect.left, clientY - rect.top);
+            };
+            const draw = (e) => {
+                if (!isDrawing || (!markerActive && !fullImage)) return;
+                e.preventDefault(); // Prevent scroll while drawing
+                const ctx = canvasRef.current.getContext('2d');
+                const rect = canvasRef.current.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                ctx.lineTo(clientX - rect.left, clientY - rect.top);
+                ctx.strokeStyle = '#e74c3c';
+                ctx.lineWidth = 4;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+            };
+            const stopDrawing = () => setIsDrawing(false);
+            const clearCanvas = () => {
+                if (canvasRef.current) {
+                    const ctx = canvasRef.current.getContext('2d');
+                    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+                }
+            };
+
+            // Audio Logic
+            const speak = () => {
+                if (speaking) {
+                    if (audioRef.current) { audioRef.current.pause(); }
+                    setSpeaking(false);
+                    return;
+                }
+                const idStr = (currentStory.id).toString().padStart(2, '0');
+                const audioSrc = lang === 'es' ? `audios/audio${idStr}_es.wav` : `audios/audio${idStr}.wav`;
+
+                if (audioRef.current) audioRef.current.pause();
+                const audio = new Audio(audioSrc);
+                audioRef.current = audio;
+                audio.onended = () => setSpeaking(false);
+                audio.play().catch(() => setSpeaking(false));
+                setSpeaking(true);
+            };
+
+            const changePage = (idx) => {
+                if (idx < 0 || idx >= dynamicStoryData.length) return;
+                setTurning(true);
+                if (audioRef.current) audioRef.current.pause();
+                setSpeaking(false);
+                setTimeout(() => {
+                    setPageIndex(idx);
+                    setTurning(false);
+                    clearCanvas();
+                }, 300);
+            };
+
+            if (view === 'cover') {
+                return (
+                    <div className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden p-4 font-sans">
+                        <div className="z-10 text-center max-w-lg animate-fade-in flex flex-col items-center">
+                            <div className="mb-3 border-y border-[#d4af37]/30 py-1.5 px-4">
+                                <span className="text-[#d4af37] text-[10px] font-bold tracking-[0.3em] uppercase">Instituto TK / Reading Club / Feb. 2026</span>
+                            </div>
+                            <div className="mb-4 relative group">
+                                <img src="images_extracted/page_1.png" className="w-40 h-auto mx-auto border-3 border-[#d4af37] shadow-xl rounded-sm transition-transform group-hover:scale-105" />
+                            </div>
+                            <h1 className="playfair text-3xl md:text-4xl font-bold mb-3">The Girl Who <span className="text-[#d4af37]">NEVER</span> Made Mistakes</h1>
+                            <p className="handwriting text-lg text-[#d4af37]/80 mb-6 tracking-widest uppercase">Mark Pett & Gary Rubinstein</p>
+                            <button onClick={() => setView('reading')} className="group relative bg-[#d4af37] text-black px-10 py-3 rounded-sm font-bold uppercase tracking-widest hover:bg-white transition-all shadow-xl active:scale-95">
+                                START
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className={`min-h-screen flex flex-col ${markerActive ? 'marker-active' : ''} ${dualView ? 'dual-view-active' : ''} ${isResizing ? 'select-none' : ''} ${fullImage ? 'full-image-mode' : ''}`}>
+                    {/* Header Controls */}
+                    <div className={`w-full glass py-3 px-6 flex justify-between items-center z-50 header-controls ${showHeaderLandscape ? 'landscape-visible' : ''}`}>
+                        <div className="flex items-center gap-4">
+                            {/* V2: Landscape close button */}
+                            <button onClick={() => setShowHeaderLandscape(false)} className="landscape-close-btn w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-all" style={{ display: 'none' }}>
+                                <Icon name="x" size={18} />
+                            </button>
+                            <button onClick={() => setView('cover')} className="bg-[#d4af37] text-black w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white transition-all shadow-lg active:scale-90"><Icon name="home" size={20} /></button>
+                            <span className="playfair font-black text-lg text-[#d4af37] hidden lg:block tracking-tight title-text">The Girl Who Never Made Mistakes</span>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                            <div className="flex bg-black/40 p-1 rounded-xl border border-white/10 glass-dark btn-group">
+                                <button onClick={() => setDualView(!dualView)} className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-2 ${dualView ? 'bg-[#d4af37] text-black shadow-inner' : 'text-white/40 hover:text-white'}`}>
+                                    <Icon name="columns" size={14} /> <span className="nav-label">{dualView ? 'SINGLE' : 'DUAL VIEW'}</span>
+                                </button>
+                                <button onClick={() => { setFullImage(true); setMarkerActive(true); }} className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-2 text-white/40 hover:text-white`}>
+                                    <Icon name="maximize-2" size={14} /> <span className="nav-label">FULL IMAGE</span>
+                                </button>
+                                <button onClick={() => setTeacherMode(!teacherMode)} className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-2 ${teacherMode ? 'bg-[#d4af37] text-black shadow-inner' : 'text-white/40 hover:text-white'}`}>
+                                    <Icon name="info" size={14} /> <span className="nav-label">{teacherMode ? 'CLOSE PLANNING' : 'LESSON PLAN'}</span>
+                                </button>
+                            </div>
+
+                            <div className="h-8 w-px bg-white/10 desktop-only"></div>
+
+                            <button onClick={() => setMarkerActive(!markerActive)} className={`w-10 h-10 flex items-center justify-center rounded-full transition-all border ${markerActive ? 'bg-red-500 border-red-400 text-white shadow-[0_0_15px_rgba(231,76,60,0.5)]' : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'}`} title="Marker Tool">
+                                <Icon name="pen-tool" size={18} />
+                            </button>
+
+                            <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="glass-dark px-4 py-1.5 rounded-lg text-[11px] font-black border border-white/10 hover:border-[#d4af37] transition-all">
+                                {lang === 'en' ? '🇺🇸' : '🇪🇸'} <span className="nav-label">{lang === 'en' ? 'ENG' : 'ESP'}</span>
+                            </button>
+
+                            <button onClick={speak} className={`w-12 h-12 flex items-center justify-center rounded-full transition-all shadow-xl active:scale-90 ${speaking ? 'bg-red-500 animate-pulse' : 'bg-[#d4af37] hover:bg-white'} text-black`}>
+                                <Icon name={speaking ? "square" : "volume-2"} size={22} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* V2: Landscape Toggle Tabs */}
+                    {!showHeaderLandscape && (
+                        <button
+                            onClick={() => setShowHeaderLandscape(true)}
+                            className="landscape-toggle-header"
+                            style={{ display: 'none' }}
+                        >
+                            <Icon name="chevron-down" size={12} />
+                            MENU
+                        </button>
+                    )}
+
+                    {!showFooterLandscape && (
+                        <button
+                            onClick={() => setShowFooterLandscape(true)}
+                            className="landscape-toggle-footer"
+                            style={{ display: 'none' }}
+                        >
+                            <Icon name="chevron-up" size={12} />
+                            NAV
+                        </button>
+                    )}
+
+                    {/* Book Surface */}
+                    <div className="flex-grow flex relative">
+                        <div className={`book-container flex-grow ${teacherMode ? 'pr-0 lg:pr-[350px]' : ''}`}>
+                            <div ref={bookCardRef} className="book-card shadow-2xl overflow-hidden animate-fade-in group flex" style={{ position: 'relative' }}>
+                                <div className="paper-texture absolute inset-0 z-0"></div>
+
+                                {/* Illustration Area */}
+                                <div ref={canvasContainerRef} style={{ width: `${splitPercent}%`, height: '100%' }} className="relative bg-[#f9f9f9] flex items-center justify-center border-r border-black/5 overflow-hidden image-area">
+                                    <button
+                                        onClick={() => {
+                                            setFullImage(!fullImage);
+                                            if (!fullImage) setMarkerActive(true);
+                                        }}
+                                        className="image-expand-btn shadow-lg"
+                                        title={fullImage ? "Exit Full Screen" : "Expand Illustration"}
+                                    >
+                                        <Icon name={fullImage ? "minimize-2" : "maximize-2"} size={20} />
+                                    </button>
+
+                                    <img src={currentStory.imageUrl} className="w-full h-full object-contain p-8 transition-transform duration-700 group-hover:scale-[1.02]" />
+
+                                    <div className="absolute bottom-6 left-6 flex items-center gap-2 glass-dark px-3 py-1.5 rounded-full border border-white/10 pointer-events-none">
+                                        <div className="w-2 h-2 rounded-full bg-[#d4af37] animate-pulse"></div>
+                                        <span className="text-[10px] font-black tracking-widest">SCENE {pageIndex + 1}</span>
+                                    </div>
+                                </div>
+
+                                {/* RESIZER HANDLE */}
+                                <div className="resizer" onMouseDown={startResizing}></div>
+
+                                {/* Text Content Area */}
+                                <div style={{ width: `${100 - splitPercent}%` }} className="p-16 flex flex-col justify-center relative bg-white/95 text-content-area">
+                                    {/* Page Number - Top Left */}
+                                    <div className="absolute top-6 left-8 text-stone-300 font-bold italic text-sm select-none uppercase tracking-widest opacity-40 mobile-hide">PAGE {currentStory.pages}</div>
+
+                                    {/* Green Circular Notes Button */}
+                                    <button onClick={() => setShowStudyNotes(true)} className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-[#1a5d4e] hover:bg-[#144a3e] text-white rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-20 group" style={{ aspectRatio: '1/1' }}>
+                                        <Icon name="book-open" size={20} />
+                                        <span className="absolute right-full mr-2 px-2 py-1 bg-black/80 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none uppercase tracking-widest mobile-hide-tooltip">Notes</span>
+                                    </button>
+
+                                    <div className="space-y-8 max-h-full overflow-y-auto custom-scroll pr-4">
+                                        {(dualView || lang === 'en') && (
+                                            <div className="animate-fade-in">
+                                                <p className="text-stone-800 font-serif leading-relaxed text-justify" style={{ fontSize: `${textSize}rem` }}>
+                                                    {currentStory.textEn}
+                                                </p>
+                                            </div>
+                                        )}
+                                        {dualView && <div className="h-px bg-gradient-to-r from-transparent via-stone-200 to-transparent my-6" />}
+                                        {(dualView || lang === 'es') && (
+                                            <div className="animate-fade-in opacity-80">
+                                                <p className="text-stone-500 font-serif italic leading-relaxed text-justify" style={{ fontSize: `${textSize * 0.85}rem` }}>
+                                                    {currentStory.textEs}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Notes Panel with Pages */}
+                                    {showStudyNotes && (() => {
+                                        const currentNotePage = notesData.pages[notesPage] || notesData.pages[0];
+                                        const sectionCount = currentNotePage.sections.length;
+                                        const gridCols = sectionCount === 1 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2';
+
+                                        const updateMainTitle = (value) => setNotesData({ ...notesData, mainTitle: value });
+                                        const updateSectionTitle = (idx, value) => {
+                                            const newPages = [...notesData.pages];
+                                            newPages[notesPage].sections[idx].title = value;
+                                            setNotesData({ ...notesData, pages: newPages });
+                                        };
+                                        const updateSectionContent = (idx, value) => {
+                                            const newPages = [...notesData.pages];
+                                            newPages[notesPage].sections[idx].content = value;
+                                            setNotesData({ ...notesData, pages: newPages });
+                                        };
+                                        const addPage = () => {
+                                            setNotesData({
+                                                ...notesData,
+                                                pages: [...notesData.pages, {
+                                                    sections: [
+                                                        { title: 'New Section', content: '' }
+                                                    ]
+                                                }]
+                                            });
+                                            setNotesPage(notesData.pages.length);
+                                        };
+                                        const addSection = () => {
+                                            const newPages = [...notesData.pages];
+                                            newPages[notesPage].sections.push({ title: `Section ${sectionCount + 1}`, content: '' });
+                                            setNotesData({ ...notesData, pages: newPages });
+                                        };
+                                        const removeSection = (idx) => {
+                                            if (currentNotePage.sections.length > 1) {
+                                                const newPages = [...notesData.pages];
+                                                newPages[notesPage].sections.splice(idx, 1);
+                                                setNotesData({ ...notesData, pages: newPages });
+                                            }
+                                        };
+
+                                        return (
+                                            <div className={`absolute inset-0 z-40 note-panel p-10 flex flex-col animate-fade-in ${showStudyNotes ? 'active' : ''}`}>
+                                                <div className="note-margin"></div>
+
+                                                {/* Header Controls */}
+                                                <div className="absolute top-4 right-4 flex gap-2 z-50">
+                                                    <button onClick={() => setIsEditingNotes(!isEditingNotes)} className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full transition-all shadow-lg ${isEditingNotes ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-[#1a5d4e] text-white hover:bg-[#144a3e]'}`} style={{ aspectRatio: '1/1', minWidth: '40px', minHeight: '40px' }} title={isEditingNotes ? 'Stop Editing' : 'Edit Notes'}>
+                                                        <Icon name={isEditingNotes ? 'check' : 'edit'} size={20} />
+                                                    </button>
+                                                    <button onClick={() => setShowStudyNotes(false)} className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-all" style={{ aspectRatio: '1/1', minWidth: '40px', minHeight: '40px' }}>
+                                                        <Icon name="x" size={24} />
+                                                    </button>
+                                                </div>
+
+                                                {/* Main Title */}
+                                                <div className="note-header-line">
+                                                    {isEditingNotes ? (
+                                                        <input
+                                                            type="text"
+                                                            value={notesData.mainTitle}
+                                                            onChange={(e) => updateMainTitle(e.target.value)}
+                                                            className="playfair text-2xl text-[#1a5d4e] font-bold pb-2 pl-4 w-full bg-transparent border-b-2 border-[#1a5d4e]/20 focus:border-[#1a5d4e] outline-none"
+                                                        />
+                                                    ) : (
+                                                        <h2 className="playfair text-2xl text-[#1a5d4e] font-bold pb-2 pl-4">{notesData.mainTitle}</h2>
+                                                    )}
+                                                </div>
+
+                                                {/* Content Grid with Dynamic Columns */}
+                                                <div className={`grid ${gridCols} gap-8 flex-grow overflow-y-auto pt-6 pr-6 pl-6 pb-4 custom-scroll`}>
+                                                    {currentNotePage.sections.map((section, idx) => (
+                                                        <div key={idx} className="flex flex-col relative">
+                                                            {isEditingNotes && currentNotePage.sections.length > 1 && (
+                                                                <button
+                                                                    onClick={() => removeSection(idx)}
+                                                                    className="absolute -top-4 -right-4 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center font-bold z-10 shadow-lg transition-all hover:scale-110"
+                                                                    style={{
+                                                                        width: '32px',
+                                                                        height: '32px',
+                                                                        minWidth: '32px',
+                                                                        minHeight: '32px',
+                                                                        maxWidth: '32px',
+                                                                        maxHeight: '32px',
+                                                                        flexShrink: 0,
+                                                                        padding: 0
+                                                                    }}
+                                                                    title="Remove Section"
+                                                                >
+                                                                    <Icon name="x" size={16} />
+                                                                </button>
+                                                            )}
+                                                            {isEditingNotes ? (
+                                                                <input
+                                                                    type="text"
+                                                                    value={section.title}
+                                                                    onChange={(e) => updateSectionTitle(idx, e.target.value)}
+                                                                    className="text-[#1a5d4e] font-bold text-[10px] uppercase tracking-widest mb-2 border-b border-[#1a5d4e]/30 pb-1 bg-transparent focus:border-[#1a5d4e] outline-none"
+                                                                />
+                                                            ) : (
+                                                                <h3 className="text-[#1a5d4e] font-bold text-[10px] uppercase tracking-widest mb-2 border-b border-[#1a5d4e]/10 pb-1">{section.title}</h3>
+                                                            )}
+                                                            {isEditingNotes ? (
+                                                                <textarea
+                                                                    value={section.content}
+                                                                    onChange={(e) => updateSectionContent(idx, e.target.value)}
+                                                                    className="text-stone-700 handwriting text-lg leading-relaxed bg-white/30 border border-[#1a5d4e]/20 rounded p-2 focus:border-[#1a5d4e] outline-none resize-none overflow-y-auto custom-scroll flex-grow min-h-[120px]"
+                                                                    placeholder="Add your notes here..."
+                                                                />
+                                                            ) : (
+                                                                <div className="text-stone-700 handwriting text-lg leading-relaxed overflow-y-auto custom-scroll flex-grow max-h-[200px] whitespace-pre-wrap">
+                                                                    {section.content || 'No notes yet.'}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {/* Add Section Button (when editing) */}
+                                                {isEditingNotes && (
+                                                    <div className="flex justify-center mt-2">
+                                                        <button
+                                                            onClick={addSection}
+                                                            className="px-4 py-1.5 bg-[#1a5d4e] hover:bg-[#144a3e] text-white rounded text-xs font-bold transition-all flex items-center gap-1"
+                                                        >
+                                                            <Icon name="plus" size={14} /> Add Section
+                                                        </button>
+                                                    </div>
+                                                )}
+
+                                                {/* Page Navigation */}
+                                                <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#1a5d4e]/10 page-nav-mobile">
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => setNotesPage(Math.max(0, notesPage - 1))}
+                                                            disabled={notesPage === 0}
+                                                            className="px-3 py-1 bg-[#1a5d4e]/10 hover:bg-[#1a5d4e]/20 rounded text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                                        >
+                                                            ← Prev
+                                                        </button>
+                                                        <span className="px-3 py-1 text-xs font-bold text-[#1a5d4e]">Page {notesPage + 1} / {notesData.pages.length}</span>
+                                                        <button
+                                                            onClick={() => setNotesPage(Math.min(notesData.pages.length - 1, notesPage + 1))}
+                                                            disabled={notesPage === notesData.pages.length - 1}
+                                                            className="px-3 py-1 bg-[#1a5d4e]/10 hover:bg-[#1a5d4e]/20 rounded text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                                        >
+                                                            Next →
+                                                        </button>
+                                                    </div>
+                                                    <button
+                                                        onClick={addPage}
+                                                        className="px-3 py-1 bg-[#d4af37] hover:bg-[#b08d2b] text-black rounded text-xs font-bold transition-all flex items-center gap-1"
+                                                    >
+                                                        <Icon name="plus" size={14} /> Add Page
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+
+                                    <div className="absolute bottom-6 left-16 right-16 flex justify-between items-center border-t border-stone-100 pt-4 pointer-events-none opacity-40 internal-footer">
+                                        <span className="text-[10px] font-black tracking-[0.3em] text-[#1a5d4e]">TINY KIDS / READING CLUB</span>
+                                        <Icon name="star" size={10} color="#d4af37" className="mobile-hide" />
+                                        <span className="text-[10px] font-black tracking-[0.3em] text-[#1a5d4e]">FEB. 2026</span>
+                                    </div>
+                                </div>
+
+                                {/* FULL SURFACE CANVAS - Covers both image and text when marker is active */}
+                                {markerActive && !fullImage && (
+                                    <>
+                                        <canvas
+                                            ref={canvasRef}
+                                            className="absolute inset-0 z-[100] cursor-crosshair"
+                                            style={{ pointerEvents: 'auto' }}
+                                            onMouseDown={startDrawing}
+                                            onMouseMove={draw}
+                                            onMouseUp={stopDrawing}
+                                            onMouseLeave={stopDrawing}
+                                            onTouchStart={startDrawing}
+                                            onTouchMove={draw}
+                                            onTouchEnd={stopDrawing}
+                                        />
+                                        <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-[110] pointer-events-none">
+                                            <button onClick={clearCanvas} className="bg-white text-black px-6 py-2 rounded-full shadow-2xl hover:bg-red-50 transition-all border border-red-100 font-bold text-xs animate-fade-in flex items-center gap-2 pointer-events-auto">
+                                                <Icon name="trash-2" size={14} color="#e74c3c" /> CLEAR
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Teacher's Sidebar Drawer */}
+                        <div className={`teacher-sidebar ${teacherMode ? 'active' : ''}`}>
+                            <div className="p-6 bg-[#2d3436] flex justify-between items-center border-b border-white/5">
+                                <div className="flex items-center gap-3">
+                                    <Icon name="book-open" color="#d4af37" />
+                                    <h3 className="text-white font-black text-xs uppercase tracking-[0.2em]">Lesson Planning</h3>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button onClick={() => setIsEditingPlanning(!isEditingPlanning)} className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${isEditingPlanning ? 'bg-green-500 text-white' : 'text-white/40 hover:text-white'}`}>
+                                        <Icon name={isEditingPlanning ? "check" : "edit"} size={16} />
+                                    </button>
+                                    <button onClick={() => setTeacherMode(false)} className="text-white/40 hover:text-white transition-colors"><Icon name="x" size={18} /></button>
+                                </div>
+                            </div>
+
+                            <div className="flex-grow p-6 space-y-8 overflow-y-auto custom-scroll">
+                                <section>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1 h-3 bg-[#d4af37]"></div>
+                                            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Discussion</span>
+                                        </div>
+                                        {isEditingPlanning && (
+                                            <button onClick={addDiscussionNote} className="w-6 h-6 flex items-center justify-center bg-[#d4af37]/10 hover:bg-[#d4af37]/20 text-[#d4af37] rounded-full transition-all">
+                                                <Icon name="plus" size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <ul className="space-y-3">
+                                        {currentStory.teacherNotes?.map((note, idx) => (
+                                            <li key={idx} className="bg-white/5 hover:bg-white/10 p-4 rounded-xl text-xs leading-relaxed border border-white/5 transition-all animate-fade-in group relative">
+                                                <span className="text-[#d4af37] font-black block mb-1">Item {idx + 1}:</span>
+                                                {isEditingPlanning ? (
+                                                    <div className="flex gap-2 items-start">
+                                                        <textarea
+                                                            value={note}
+                                                            onChange={(e) => handleUpdateNote(idx, e.target.value)}
+                                                            className="w-full bg-black/40 border border-[#d4af37]/30 rounded p-2 text-white/80 focus:border-[#d4af37] outline-none text-xs"
+                                                            rows="2"
+                                                        />
+                                                        <button
+                                                            onClick={() => {
+                                                                const newData = [...dynamicStoryData];
+                                                                newData[pageIndex].teacherNotes.splice(idx, 1);
+                                                                setDynamicStoryData(newData);
+                                                            }}
+                                                            className="text-red-500/40 hover:text-red-500 p-1"
+                                                        >
+                                                            <Icon name="trash-2" size={14} />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-white/80">{note}</span>
+                                                )}
+                                            </li>
+                                        )) || <p className="text-white/30 text-xs italic">Prepare discussion questions for this part.</p>}
+                                    </ul>
+                                </section>
+
+                                <section>
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="w-1 h-3 bg-blue-500"></div>
+                                        <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Extras</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-2">
+                                        <button onClick={toggleTimer} className={`flex items-center justify-between p-4 rounded-xl transition-all text-[11px] font-bold border ${timerValue ? 'bg-blue-600 text-white shadow-lg border-blue-400' : 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20'}`}>
+                                            <div className="flex items-center gap-3">
+                                                <Icon name="timer" size={16} />
+                                                <span>{timerValue ? 'STOPWATCH ACTIVE' : 'STOPWATCH'}</span>
+                                            </div>
+                                            {timerValue && <span className="bg-black/40 px-3 py-1 rounded-lg font-mono text-sm tracking-wider">{timerValue}</span>}
+                                        </button>
+                                    </div>
+                                </section>
+                            </div>
+
+                            <div className="p-4 bg-black/40 text-center">
+                                <span className="text-[9px] font-bold opacity-30 uppercase tracking-[0.2em]">Tiny Kids / Reading Club</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Navigation Bar */}
+                    <div className={`w-full glass p-4 flex items-center justify-between z-50 border-t border-white/5 ${showFooterLandscape ? 'landscape-visible' : ''}`}>
+                        <div className="flex gap-2 items-center">
+                            <button disabled={pageIndex === 0} onClick={() => changePage(pageIndex - 1)} className="w-12 h-12 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 disabled:opacity-20 transition-all active:scale-90 shadow-xl"><Icon name="chevron-left" size={24} /></button>
+
+                            {/* Page Jump Input (Premium Design) */}
+                            <div className="flex items-center page-jump-group h-12 ml-2">
+                                <input
+                                    type="number"
+                                    value={jumpTo}
+                                    onChange={(e) => setJumpTo(e.target.value)}
+                                    placeholder="--"
+                                    className="page-jump-input"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            const pg = parseInt(jumpTo);
+                                            if (!isNaN(pg)) changePage(pg - 1);
+                                            setJumpTo("");
+                                        }
+                                    }}
+                                />
+                                <button
+                                    onClick={() => {
+                                        const pg = parseInt(jumpTo);
+                                        if (!isNaN(pg)) changePage(pg - 1);
+                                        setJumpTo("");
+                                    }}
+                                    className="page-jump-btn"
+                                    title="Jump to Page"
+                                >
+                                    <Icon name="arrow-right" size={14} />
+                                </button>
+                            </div>
+
+                            <button disabled={pageIndex === dynamicStoryData.length - 1} onClick={() => changePage(pageIndex + 1)} className="w-12 h-12 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 disabled:opacity-20 transition-all active:scale-90 shadow-xl"><Icon name="chevron-right" size={24} /></button>
+                        </div>
+
+                        <div className="flex-grow max-w-xl px-12 flex flex-col items-center gap-3 desktop-only">
+                            <div className="w-full h-1.5 bg-black/30 rounded-full overflow-hidden border border-white/5 p-[1px] mobile-hide">
+                                <div className="h-full bg-gradient-to-r from-[#d4af37] to-white transition-all duration-700 rounded-full" style={{ width: `${((pageIndex + 1) / dynamicStoryData.length) * 100}%` }}></div>
+                            </div>
+                            <div className="flex items-center gap-4 mobile-hide">
+                                <span className="text-[11px] font-black opacity-40 uppercase tracking-[0.5em]">{pageIndex + 1} / {dynamicStoryData.length}</span>
+                                <div className="w-1 h-1 rounded-full bg-white/20"></div>
+                                <span className="text-[11px] font-black text-[#d4af37] uppercase tracking-[0.5em]">CHAPTER I: THE GIRL</span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2 bg-black/30 px-4 py-2 rounded-xl border border-white/10 size-control-mobile">
+                                <button onClick={() => setTextSize(Math.max(1, textSize - 0.2))} className="text-white/40 hover:text-[#d4af37] transition-all"><Icon name="minus" size={14} /></button>
+                                <span className="text-[10px] font-bold w-12 text-center opacity-60">SIZE</span>
+                                <button onClick={() => setTextSize(Math.min(2.5, textSize + 0.2))} className="text-white/40 hover:text-[#d4af37] transition-all"><Icon name="plus" size={14} /></button>
+                            </div>
+                            {/* V2: Landscape close button */}
+                            <button onClick={() => setShowFooterLandscape(false)} className="landscape-close-btn w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-all" style={{ display: 'none' }}>
+                                <Icon name="x" size={18} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {fullImage && (
+                        <div className="fixed inset-0 z-[10000] bg-black flex flex-col animate-fade-in">
+                            <div className="absolute top-6 right-6 z-[10005] flex gap-4">
+                                <button onClick={clearCanvas} className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md border border-white/20 transition-all flex items-center gap-2 px-6 font-bold text-xs">
+                                    <Icon name="trash-2" size={18} /> CLEAR
+                                </button>
+                                <button onClick={() => setFullImage(false)} className="bg-[#d4af37] hover:bg-white text-black p-3 rounded-full shadow-2xl transition-all border border-white/20 flex items-center justify-center w-12 h-12">
+                                    <Icon name="x" size={24} />
+                                </button>
+                            </div>
+
+                            <div className="relative flex-grow flex items-center justify-center overflow-hidden" ref={canvasContainerRef}>
+                                <img src={currentStory.imageUrl} className="max-w-full max-h-full object-contain p-0 md:p-12" />
+                                <canvas
+                                    ref={canvasRef}
+                                    className="absolute inset-0 z-[10001] cursor-crosshair"
+                                    onMouseDown={startDrawing}
+                                    onMouseMove={draw}
+                                    onMouseUp={stopDrawing}
+                                    onMouseLeave={stopDrawing}
+                                    onTouchStart={startDrawing}
+                                    onTouchMove={draw}
+                                    onTouchEnd={stopDrawing}
+                                />
+                                <div className="absolute bottom-10 left-10 pointer-events-none opacity-40 flex items-center gap-3">
+                                    <div className="w-3 h-3 rounded-full bg-[#d4af37] animate-pulse"></div>
+                                    <span className="text-white font-black tracking-[0.5em] text-xs">SCENE {pageIndex + 1}</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
