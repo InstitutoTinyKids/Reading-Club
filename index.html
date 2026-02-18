@@ -1220,16 +1220,12 @@
                     {/* Header Controls */}
                     <div className={`w-full glass py-3 px-6 flex justify-between items-center z-50 header-controls ${showHeaderLandscape ? 'landscape-visible' : ''}`}>
                         <div className="flex items-center gap-4">
-                            {/* V2: Landscape close button */}
-                            <button onClick={() => setShowHeaderLandscape(false)} className="landscape-close-btn w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-all" style={{ display: 'none' }}>
-                                <Icon name="x" size={18} />
-                            </button>
                             <button onClick={() => setView('cover')} className="bg-[#d4af37] text-black w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white transition-all shadow-lg active:scale-90"><Icon name="home" size={20} /></button>
                             <span className="playfair font-black text-lg text-[#d4af37] hidden md:block tracking-tight title-text">The Girl Who Never Made Mistakes</span>
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <div className="flex bg-black/40 p-1 rounded-xl border border-white/10 glass-dark btn-group gap-2">
+                            <div className="flex bg-black/40 p-2 rounded-xl border border-white/10 glass-dark btn-group gap-6">
                                 <button onClick={() => setDualView(!dualView)} className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-2 ${dualView ? 'bg-[#d4af37] text-black shadow-inner' : 'text-white/40 hover:text-white'}`}>
                                     <Icon name="columns" size={14} /> <span className="nav-label">{dualView ? 'SINGLE' : 'DUAL VIEW'}</span>
                                 </button>
@@ -1262,6 +1258,11 @@
 
                             <button onClick={speak} className={`w-12 h-12 flex items-center justify-center rounded-full transition-all shadow-xl active:scale-90 ${speaking ? 'bg-red-500 animate-pulse' : 'bg-[#d4af37] hover:bg-white'} text-black`}>
                                 <Icon name={speaking ? "square" : "volume-2"} size={22} />
+                            </button>
+
+                            {/* V2: Landscape close button - Moved to far right */}
+                            <button onClick={() => setShowHeaderLandscape(false)} className="landscape-close-btn w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 transition-all bg-white/5 border border-white/10" style={{ display: 'none' }}>
+                                <Icon name="x" size={20} />
                             </button>
                         </div>
                     </div>
