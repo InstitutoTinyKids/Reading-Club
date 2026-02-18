@@ -449,8 +449,8 @@
         /* V2: LANDSCAPE MOBILE OPTIMIZATION - Maximize content area */
         @media (max-width: 1300px) and (orientation: landscape) {
             :root {
-                --header-h: 44px !important;
-                --nav-h: 48px !important;
+                --header-h: 64px !important;
+                --nav-h: 64px !important;
             }
 
             /* Hide all decorative text elements */
@@ -976,11 +976,10 @@
             // --- RE-SYNC CANVAS ON LAYOUT CHANGE ---
             const syncCanvas = () => {
                 if (canvasRef.current) {
-                    if (fullImage && canvasContainerRef.current) {
-                        // Full image mode: canvas matches the image container
-                        const rect = canvasContainerRef.current.getBoundingClientRect();
-                        canvasRef.current.width = rect.width;
-                        canvasRef.current.height = rect.height;
+                    if (fullImage) {
+                        // Full image mode: canvas covers entire viewport
+                        canvasRef.current.width = window.innerWidth;
+                        canvasRef.current.height = window.innerHeight;
                     } else if (markerActive && bookCardRef.current) {
                         // Regular view with marker: canvas covers entire book surface
                         const rect = bookCardRef.current.getBoundingClientRect();
@@ -1111,20 +1110,24 @@
             const startDrawing = (e) => {
                 if (!markerActive) return;
                 setIsDrawing(true);
-                const ctx = canvasRef.current.getContext('2d');
-                const rect = canvasRef.current.getBoundingClientRect();
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                const rect = canvas.getBoundingClientRect();
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
                 ctx.beginPath();
                 ctx.moveTo(clientX - rect.left, clientY - rect.top);
             };
             const draw = (e) => {
                 if (!isDrawing || !markerActive) return;
                 e.preventDefault(); // Prevent scroll while drawing
-                const ctx = canvasRef.current.getContext('2d');
-                const rect = canvasRef.current.getBoundingClientRect();
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                const rect = canvas.getBoundingClientRect();
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
                 ctx.lineTo(clientX - rect.left, clientY - rect.top);
                 ctx.strokeStyle = '#e74c3c';
                 ctx.lineWidth = 4;
@@ -1203,14 +1206,14 @@
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <div className="flex bg-black/40 p-1 rounded-xl border border-white/10 glass-dark btn-group">
-                                <button onClick={() => setDualView(!dualView)} className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-2 ${dualView ? 'bg-[#d4af37] text-black shadow-inner' : 'text-white/40 hover:text-white'}`} style={{ marginRight: '4px' }}>
+                            <div className="flex bg-black/40 p-1 rounded-xl border border-white/10 glass-dark btn-group gap-2">
+                                <button onClick={() => setDualView(!dualView)} className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-2 ${dualView ? 'bg-[#d4af37] text-black shadow-inner' : 'text-white/40 hover:text-white'}`}>
                                     <Icon name="columns" size={14} /> <span className="nav-label">{dualView ? 'SINGLE' : 'DUAL VIEW'}</span>
                                 </button>
                                 <button onClick={() => { setFullImage(true); setMarkerActive(true); }} className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-2 text-white/40 hover:text-white`}>
                                     <Icon name="maximize-2" size={14} /> <span className="nav-label">FULL IMAGE</span>
                                 </button>
-                                <button onClick={() => setTeacherMode(!teacherMode)} className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-2 ${teacherMode ? 'bg-[#d4af37] text-black shadow-inner' : 'text-white/40 hover:text-white'}`} style={{ marginLeft: '4px' }}>
+                                <button onClick={() => setTeacherMode(!teacherMode)} className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-2 ${teacherMode ? 'bg-[#d4af37] text-black shadow-inner' : 'text-white/40 hover:text-white'}`}>
                                     <Icon name="info" size={14} /> <span className="nav-label">{teacherMode ? 'CLOSE PLANNING' : 'LESSON PLAN'}</span>
                                 </button>
                             </div>
@@ -1265,11 +1268,12 @@
                                     <button
                                         onClick={() => {
                                             if (!fullImage) {
+                                                setFullImage(true);
                                                 setMarkerActive(true);
                                             } else {
+                                                setFullImage(false);
                                                 setMarkerActive(false);
                                             }
-                                            setFullImage(!fullImage);
                                         }}
                                         className="image-expand-btn shadow-lg"
                                         title={fullImage ? "Exit Full Screen" : "Expand Illustration"}
@@ -1277,21 +1281,7 @@
                                         <Icon name={fullImage ? "minimize-2" : "maximize-2"} size={20} />
                                     </button>
 
-                                    {/* Full Image Marker Layer */}
-                                    {fullImage && markerActive && (
-                                        <canvas
-                                            ref={canvasRef}
-                                            className="absolute inset-0 z-[10000] cursor-crosshair"
-                                            style={{ pointerEvents: 'auto' }}
-                                            onMouseDown={startDrawing}
-                                            onMouseMove={draw}
-                                            onMouseUp={stopDrawing}
-                                            onMouseLeave={stopDrawing}
-                                            onTouchStart={startDrawing}
-                                            onTouchMove={draw}
-                                            onTouchEnd={stopDrawing}
-                                        />
-                                    )}
+                                    {/* No longer here - global canvas used instead */}
 
                                     <img src={currentStory.imageUrl} className="w-full h-full object-contain p-8 transition-transform duration-700 group-hover:scale-[1.02]" />
 
@@ -1698,6 +1688,29 @@
                                 </div>
                             </div>
                         </div>
+                    )}
+                    {/* GLOBAL MARKER CANVAS */}
+                    {markerActive && (
+                        <canvas
+                            ref={canvasRef}
+                            className={`pointer-events-auto cursor-crosshair ${fullImage ? 'fixed inset-0 z-[9999]' : 'absolute inset-0 z-[100]'}`}
+                            style={{
+                                touchAction: 'none',
+                                ...(fullImage ? {} : {
+                                    width: bookCardRef.current?.getBoundingClientRect().width,
+                                    height: bookCardRef.current?.getBoundingClientRect().height,
+                                    top: bookCardRef.current?.getBoundingClientRect().top - document.body.getBoundingClientRect().top,
+                                    left: bookCardRef.current?.getBoundingClientRect().left - document.body.getBoundingClientRect().left
+                                })
+                            }}
+                            onMouseDown={startDrawing}
+                            onMouseMove={draw}
+                            onMouseUp={stopDrawing}
+                            onMouseLeave={stopDrawing}
+                            onTouchStart={startDrawing}
+                            onTouchMove={draw}
+                            onTouchEnd={stopDrawing}
+                        />
                     )}
                 </div>
             );
