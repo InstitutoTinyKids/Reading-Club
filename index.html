@@ -432,7 +432,6 @@
 
             /* Responsive Text */
             p {
-                font-size: var(--text-lg) !important;
                 line-height: 1.6;
             }
         }
@@ -1220,9 +1219,11 @@
 
                             <div className="h-8 w-px bg-white/10 desktop-only"></div>
 
-                            <button onClick={() => setMarkerActive(!markerActive)} className={`w-10 h-10 flex items-center justify-center rounded-full transition-all border ${markerActive ? 'bg-red-500 border-red-400 text-white shadow-[0_0_15px_rgba(231,76,60,0.5)]' : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'}`} title="Marker Tool">
-                                <Icon name="pen-tool" size={18} />
-                            </button>
+                            {fullImage && (
+                                <button onClick={() => setMarkerActive(!markerActive)} className={`w-10 h-10 flex items-center justify-center rounded-full transition-all border ${markerActive ? 'bg-red-500 border-red-400 text-white shadow-[0_0_15px_rgba(231,76,60,0.5)]' : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'}`} title="Marker Tool">
+                                    <Icon name="pen-tool" size={18} />
+                                </button>
+                            )}
 
                             <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="glass-dark px-4 py-1.5 rounded-lg text-[11px] font-black border border-white/10 hover:border-[#d4af37] transition-all">
                                 {lang === 'en' ? '🇺🇸' : '🇪🇸'} <span className="nav-label">{lang === 'en' ? 'ENG' : 'ESP'}</span>
@@ -1281,7 +1282,21 @@
                                         <Icon name={fullImage ? "minimize-2" : "maximize-2"} size={20} />
                                     </button>
 
-                                    {/* No longer here - global canvas used instead */}
+                                    {/* Full Image Marker Layer */}
+                                    {fullImage && markerActive && (
+                                        <canvas
+                                            ref={canvasRef}
+                                            className="fixed inset-0 z-[10000] cursor-crosshair"
+                                            style={{ touchAction: 'none' }}
+                                            onMouseDown={startDrawing}
+                                            onMouseMove={draw}
+                                            onMouseUp={stopDrawing}
+                                            onMouseLeave={stopDrawing}
+                                            onTouchStart={startDrawing}
+                                            onTouchMove={draw}
+                                            onTouchEnd={stopDrawing}
+                                        />
+                                    )}
 
                                     <img src={currentStory.imageUrl} className="w-full h-full object-contain p-8 transition-transform duration-700 group-hover:scale-[1.02]" />
 
@@ -1688,29 +1703,6 @@
                                 </div>
                             </div>
                         </div>
-                    )}
-                    {/* GLOBAL MARKER CANVAS */}
-                    {markerActive && (
-                        <canvas
-                            ref={canvasRef}
-                            className={`pointer-events-auto cursor-crosshair ${fullImage ? 'fixed inset-0 z-[9999]' : 'absolute inset-0 z-[100]'}`}
-                            style={{
-                                touchAction: 'none',
-                                ...(fullImage ? {} : {
-                                    width: bookCardRef.current?.getBoundingClientRect().width,
-                                    height: bookCardRef.current?.getBoundingClientRect().height,
-                                    top: bookCardRef.current?.getBoundingClientRect().top - document.body.getBoundingClientRect().top,
-                                    left: bookCardRef.current?.getBoundingClientRect().left - document.body.getBoundingClientRect().left
-                                })
-                            }}
-                            onMouseDown={startDrawing}
-                            onMouseMove={draw}
-                            onMouseUp={stopDrawing}
-                            onMouseLeave={stopDrawing}
-                            onTouchStart={startDrawing}
-                            onTouchMove={draw}
-                            onTouchEnd={stopDrawing}
-                        />
                     )}
                 </div>
             );
