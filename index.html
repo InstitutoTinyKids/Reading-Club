@@ -1024,6 +1024,7 @@
                 touchStartX.current = null;
             };
 
+            /* Swipe gestures disabled as per user request
             useEffect(() => {
                 const bookCard = bookCardRef.current;
                 if (bookCard) {
@@ -1035,6 +1036,7 @@
                     };
                 }
             }, [pageIndex, view, markerActive, fullImage]);
+            */
 
             // --- RESIZER LOGIC ---
             const startResizing = (e) => {
@@ -1720,9 +1722,7 @@
                     {fullImage && (
                         <div className="fixed inset-0 z-[10000] bg-black flex flex-col animate-fade-in">
                             <div className="absolute top-6 right-6 z-[10005] flex gap-4">
-                                <button onClick={clearCanvas} className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md border border-white/20 transition-all flex items-center gap-2 px-6 font-bold text-xs">
-                                    <Icon name="trash-2" size={18} /> CLEAR
-                                </button>
+                                {/* Clear button removed as per user request */}
                                 <button onClick={() => setFullImage(false)} className="bg-[#d4af37] hover:bg-white text-black p-3 rounded-full shadow-2xl transition-all border border-white/20 flex items-center justify-center w-12 h-12">
                                     <Icon name="x" size={24} />
                                 </button>
