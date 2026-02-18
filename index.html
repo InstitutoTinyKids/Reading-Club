@@ -933,6 +933,7 @@
             const [showOptionsMenu, setShowOptionsMenu] = useState(false);
             const [showSizeControl, setShowSizeControl] = useState(false);
             const [showPageJump, setShowPageJump] = useState(false);
+            const [highlighterActive, setHighlighterActive] = useState(false);
 
             // V2: Landscape auto-hide bars
             const [showHeaderLandscape, setShowHeaderLandscape] = useState(false);
@@ -968,7 +969,9 @@
 
             const audioRef = useRef(null);
             const canvasRef = useRef(null);
+            const highlighterCanvasRef = useRef(null);
             const canvasContainerRef = useRef(null);
+            const textContentRef = useRef(null);
 
             const currentStory = dynamicStoryData[pageIndex];
 
@@ -976,15 +979,14 @@
             const syncCanvas = () => {
                 if (canvasRef.current) {
                     if (fullImage) {
-                        // Full image mode: canvas covers entire viewport
                         canvasRef.current.width = window.innerWidth;
                         canvasRef.current.height = window.innerHeight;
-                    } else if (markerActive && bookCardRef.current) {
-                        // Regular view with marker: canvas covers entire book surface
-                        const rect = bookCardRef.current.getBoundingClientRect();
-                        canvasRef.current.width = rect.width;
-                        canvasRef.current.height = rect.height;
                     }
+                }
+                if (highlighterCanvasRef.current && textContentRef.current) {
+                    const rect = textContentRef.current.getBoundingClientRect();
+                    highlighterCanvasRef.current.width = rect.width;
+                    highlighterCanvasRef.current.height = rect.height;
                 }
             };
 
@@ -1104,12 +1106,11 @@
                 setDynamicStoryData(newData);
             };
 
-            // Canvas Drawing Logic
-            const [isDrawing, setIsDrawing] = useState(false);
-            const startDrawing = (e) => {
-                if (!markerActive) return;
+            const startDrawing = (e, isHighlighter = false) => {
+                const targetActive = isHighlighter ? highlighterActive : markerActive;
+                if (!targetActive) return;
                 setIsDrawing(true);
-                const canvas = canvasRef.current;
+                const canvas = isHighlighter ? highlighterCanvasRef.current : canvasRef.current;
                 const ctx = canvas.getContext('2d');
                 const rect = canvas.getBoundingClientRect();
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -1118,28 +1119,40 @@
                 ctx.beginPath();
                 ctx.moveTo(clientX - rect.left, clientY - rect.top);
             };
-            const draw = (e) => {
-                if (!isDrawing || !markerActive) return;
-                e.preventDefault(); // Prevent scroll while drawing
-                const canvas = canvasRef.current;
+            const draw = (e, isHighlighter = false) => {
+                if (!isDrawing) return;
+                const targetActive = isHighlighter ? highlighterActive : markerActive;
+                if (!targetActive) return;
+
+                e.preventDefault();
+                const canvas = isHighlighter ? highlighterCanvasRef.current : canvasRef.current;
                 const ctx = canvas.getContext('2d');
                 const rect = canvas.getBoundingClientRect();
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
                 ctx.lineTo(clientX - rect.left, clientY - rect.top);
-                ctx.strokeStyle = '#e74c3c';
-                ctx.lineWidth = 4;
-                ctx.lineCap = 'round';
+
+                if (isHighlighter) {
+                    ctx.strokeStyle = 'rgba(255, 255, 0, 0.4)';
+                    ctx.lineWidth = 25;
+                    ctx.lineCap = 'square';
+                } else {
+                    ctx.strokeStyle = '#e74c3c';
+                    ctx.lineWidth = 4;
+                    ctx.lineCap = 'round';
+                }
                 ctx.stroke();
             };
-            const stopDrawing = () => setIsDrawing(false);
-            const clearCanvas = () => {
-                if (canvasRef.current) {
-                    const ctx = canvasRef.current.getContext('2d');
-                    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+
+            const clearCanvas = (isHighlighter = false) => {
+                const canvas = isHighlighter ? highlighterCanvasRef.current : canvasRef.current;
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
                 }
             };
+            const stopDrawing = () => setIsDrawing(false);
 
             // Audio Logic
             const speak = () => {
@@ -1159,16 +1172,22 @@
                 setSpeaking(true);
             };
 
-            const changePage = (idx) => {
-                if (idx < 0 || idx >= dynamicStoryData.length) return;
-                setTurning(true);
-                if (audioRef.current) audioRef.current.pause();
-                setSpeaking(false);
-                setTimeout(() => {
-                    setPageIndex(idx);
-                    setTurning(false);
-                    clearCanvas();
-                }, 300);
+            const changePage = (newIndex) => {
+                if (newIndex >= 0 && newIndex < dynamicStoryData.length) {
+                    setTurning(true);
+                    setSpeaking(false);
+                    clearCanvas(true); // Clear highlighter on page change
+                    clearCanvas(false); // Clear brush on page change
+                    if (audioRef.current) {
+                        audioRef.current.pause();
+                        audioRef.current.currentTime = 0;
+                    }
+                    setTimeout(() => {
+                        setPageIndex(newIndex);
+                        setTurning(false);
+                        setMarkerActive(false); // Force marker off on page change
+                    }, 500);
+                }
             };
 
             if (view === 'cover') {
@@ -1217,7 +1236,19 @@
                                 </button>
                             </div>
 
-                            <div className="h-8 w-px bg-white/10 desktop-only"></div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setHighlighterActive(!highlighterActive)}
+                                    className={`w-10 h-10 flex items-center justify-center rounded-lg transition-all border ${highlighterActive ? 'bg-yellow-400 border-yellow-300 text-black shadow-[0_0_15px_rgba(255,255,0,0.5)]' : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'}`}
+                                    title="Highlighter Tool">
+                                    <Icon name="highlighter" size={18} />
+                                </button>
+                                {highlighterActive && (
+                                    <button onClick={() => clearCanvas(true)} className="bg-red-500/20 hover:bg-red-500/40 text-red-500 p-2 rounded-lg border border-red-500/30 transition-all active:scale-95" title="Clear Highlighter">
+                                        <Icon name="trash-2" size={14} />
+                                    </button>
+                                )}
+                            </div>
 
                             {fullImage && (
                                 <button onClick={() => setMarkerActive(!markerActive)} className={`w-10 h-10 flex items-center justify-center rounded-full transition-all border ${markerActive ? 'bg-red-500 border-red-400 text-white shadow-[0_0_15px_rgba(231,76,60,0.5)]' : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'}`} title="Marker Tool">
@@ -1310,7 +1341,22 @@
                                 <div className="resizer" onMouseDown={startResizing} onTouchStart={startResizing}></div>
 
                                 {/* Text Content Area */}
-                                <div style={{ width: `${100 - splitPercent}%` }} className="p-16 flex flex-col justify-center relative bg-white/95 text-content-area">
+                                <div ref={textContentRef} style={{ width: `${100 - splitPercent}%` }} className="p-16 flex flex-col justify-center relative bg-white/95 text-content-area">
+                                    {/* Highlighter Canvas */}
+                                    {highlighterActive && (
+                                        <canvas
+                                            ref={highlighterCanvasRef}
+                                            className="absolute inset-0 z-10 cursor-crosshair"
+                                            style={{ touchAction: 'none' }}
+                                            onMouseDown={(e) => startDrawing(e, true)}
+                                            onMouseMove={(e) => draw(e, true)}
+                                            onMouseUp={stopDrawing}
+                                            onMouseLeave={stopDrawing}
+                                            onTouchStart={(e) => startDrawing(e, true)}
+                                            onTouchMove={(e) => draw(e, true)}
+                                            onTouchEnd={stopDrawing}
+                                        />
+                                    )}
                                     {/* Page Number - Top Left */}
                                     <div className="absolute top-6 left-8 text-stone-300 font-bold italic text-sm select-none uppercase tracking-widest opacity-40 mobile-hide">PAGE {currentStory.pages}</div>
 
