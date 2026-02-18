@@ -998,7 +998,7 @@
                     window.removeEventListener('resize', syncCanvas);
                     clearTimeout(timeout);
                 };
-            }, [view, teacherMode, pageIndex, splitPercent, dualView, fullImage]);
+            }, [view, teacherMode, pageIndex, splitPercent, dualView, fullImage, markerActive, highlighterActive]);
 
             // --- SWIPE GESTURES FOR MOBILE ---
             const touchStartX = useRef(null);
@@ -1105,6 +1105,9 @@
                 newData[pageIndex].teacherNotes.push(".");
                 setDynamicStoryData(newData);
             };
+
+            // Canvas Drawing Logic
+            const [isDrawing, setIsDrawing] = useState(false);
 
             const startDrawing = (e, isHighlighter = false) => {
                 const targetActive = isHighlighter ? highlighterActive : markerActive;
@@ -1243,11 +1246,6 @@
                                     title="Highlighter Tool">
                                     <Icon name="highlighter" size={18} />
                                 </button>
-                                {highlighterActive && (
-                                    <button onClick={() => clearCanvas(true)} className="bg-red-500/20 hover:bg-red-500/40 text-red-500 p-2 rounded-lg border border-red-500/30 transition-all active:scale-95" title="Clear Highlighter">
-                                        <Icon name="trash-2" size={14} />
-                                    </button>
-                                )}
                             </div>
 
                             {fullImage && (
