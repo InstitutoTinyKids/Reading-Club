@@ -1137,7 +1137,7 @@
                 ctx.lineTo(clientX - rect.left, clientY - rect.top);
 
                 if (isHighlighter) {
-                    ctx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
+                    ctx.strokeStyle = '#ffff00';
                     ctx.lineWidth = 25;
                     ctx.lineCap = 'square';
                 } else {
@@ -1317,12 +1317,12 @@
                                             ref={canvasRef}
                                             className="fixed inset-0 z-[10000] cursor-crosshair"
                                             style={{ touchAction: 'none' }}
-                                            onMouseDown={startDrawing}
-                                            onMouseMove={draw}
+                                            onMouseDown={(e) => startDrawing(e, false)}
+                                            onMouseMove={(e) => draw(e, false)}
                                             onMouseUp={stopDrawing}
                                             onMouseLeave={stopDrawing}
-                                            onTouchStart={startDrawing}
-                                            onTouchMove={draw}
+                                            onTouchStart={(e) => startDrawing(e, false)}
+                                            onTouchMove={(e) => draw(e, false)}
                                             onTouchEnd={stopDrawing}
                                         />
                                     )}
@@ -1345,7 +1345,7 @@
                                         <canvas
                                             ref={highlighterCanvasRef}
                                             className="absolute inset-0 z-10 cursor-crosshair"
-                                            style={{ touchAction: 'none' }}
+                                            style={{ touchAction: 'none', opacity: 0.3 }}
                                             onMouseDown={(e) => startDrawing(e, true)}
                                             onMouseMove={(e) => draw(e, true)}
                                             onMouseUp={stopDrawing}
